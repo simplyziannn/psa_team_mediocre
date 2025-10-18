@@ -1,0 +1,40 @@
+{
+  "structured_alert": {
+    "subject": "Guan Yibin and Jermaine!! <3",
+    "product": "None",
+    "error_codes": [],
+    "services": [
+      "None"
+    ],
+    "keywords": [],
+    "case_ids": [],
+    "summary": "Guan Yibin and Jermaine!! <3",
+    "source_alert": {
+      "problem_statement": "Guan Yibin and Jermaine!! <3",
+      "incident_type": "None",
+      "variables": {},
+      "evidence": {
+        "text_sample": "Yibin and Jermaine was caught mating."
+      }
+    }
+  },
+  "matches": [],
+  "excel_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Case Log.xlsx",
+  "kb_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
+  "escalation_pdf": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Product Team Escalation Contacts.pdf",
+  "timestamp": "2025-10-18T21:18:58+08:00",
+  "kb_used": true,
+  "escalation_used": true,
+  "llm_analysis": {
+    "problem_statement": "",
+    "solutions": [],
+    "sop": [],
+    "escalation": {
+      "contacts": [],
+      "procedure": [],
+      "notes": null,
+      "source": "escalation_contacts"
+    },
+    "suggested_escalation": null
+  }
+}

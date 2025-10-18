@@ -1,0 +1,24 @@
+{
+  "CNTR": "Attempt to create container range from CONTAINER_ID to CONTAINER_ID failed with error 'Overlapping container range(s) found.' The specified range cannot be located in queries; queries return a different existing range indicating a serial-number overlap (not visible to the creating process).",
+  "SOP": [
+    "1. Reproduce and gather evidence:",
+    "    1.1. Run queries for container ranges covering CONTAINER_ID..CONTAINER_ID and capture results (include timestamps and query IDs).",
+    "    1.2. Capture system logs and screenshots before/after the operation.",
+    "2. Check parameters and serial ranges:",
+    "    2.1. Verify container parameter range definitions and confirm exclusion of the check digit where applicable.",
+    "    2.2. Query serial-number ranges to identify exact overlap (e.g., existing BSIU 3430001).",
+    "3. Isolate scope and permissions:",
+    "    3.1. Reproduce the issue on a safe test entity or sandbox to avoid production impact.",
+    "    3.2. Confirm whether the creating process has different visibility/permissions that hide the conflicting range.",
+    "4. Investigate environment changes:",
+    "    4.1. Review recent deployments, configuration toggles, or hotfixes near the incident timestamp.",
+    "5. Apply corrective action:",
+    "    5.1. If overlap confirmed, adjust serial allocation or retire/merge the conflicting range according to policy.",
+    "    5.2. Prefer re-sync/replay workflows over manual edits unless SOP allows manual changes.",
+    "    5.3. Capture before/after evidence and sanitize details for the case.",
+    "6. Verification:",
+    "    6.1. Run the end-to-end journey again and confirm the container-range creation succeeds.",
+    "    6.2. Monitor for 30 minutes with no new related errors and validate logs for resolved overlap.",
+    "    6.3. Attach evidence and update the case with sanitized details."
+  ]
+}

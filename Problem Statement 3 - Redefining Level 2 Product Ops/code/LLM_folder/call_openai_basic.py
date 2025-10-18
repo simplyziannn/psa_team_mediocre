@@ -3,7 +3,7 @@ import os, json, requests
 API_BASE   = "https://psacodesprint2025.azure-api.net/gpt-5-mini/openai"
 DEPLOYMENT = "gpt-5-mini"
 API_VERSION = "2025-01-01-preview"
-SUB_KEY = (os.getenv("PORTAL_SUB_KEY", "0aca49599682440084da0594a81adb80") or "").strip()
+SUB_KEY = (os.getenv("PORTAL_SUB_KEY", "191897e716604e55b3f88ef227800633") or "").strip()
 
 URL = f"{API_BASE}/deployments/{DEPLOYMENT}/chat/completions?api-version={API_VERSION}&subscription-key={SUB_KEY}"
 

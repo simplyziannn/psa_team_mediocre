@@ -177,7 +177,7 @@ def find_matching_cases(entities: dict, excel_path: Path, max_results: int = 10)
     subj = entities.get("subject") or ""
     prod = entities.get("product") or ""
     kws  = entities.get("keywords") or []
-    ids  = set(_norm(x) for x in (entities.get("case_ids") or []))
+    ids  = { _norm(x) for x in (entities.get("case_ids") or []) if x }
     subj_kw_tokens = set(_toks_domain(" ".join([subj, *kws])))
 
     out = []
@@ -187,8 +187,8 @@ def find_matching_cases(entities: dict, excel_path: Path, max_results: int = 10)
         rd = str(d.get(mp.get("description", "description"), ""))
         rp = str(d.get(mp.get("product", "product"), ""))
 
-        # Build row text and tokens (domain-only)
-        text = f"{rs}\n{rd}"
+        # Build row text and tokens (domain-only). Include product/category as well.
+        text = f"{rs}\n{rd}\n{rp}"
         row_tokens = set(_toks_domain(text))
 
         sc = 0.0
@@ -197,6 +197,10 @@ def find_matching_cases(entities: dict, excel_path: Path, max_results: int = 10)
         id_hit = bool(cid_col and _norm(str(d.get(cid_col, ""))) in ids)
         if id_hit:
             sc += 100.0
+        # If no dedicated Case ID match, also check if any candidate ID shows up in row text
+        id_in_text = any(x for x in ids if x and x in _norm(text))
+        if id_in_text and not id_hit:
+            sc += 50.0
 
         # Product match: heavily down-weighted
         if prod and prod.lower() != "none":
@@ -231,7 +235,9 @@ def find_matching_cases(entities: dict, excel_path: Path, max_results: int = 10)
             subj_sim >= 0.30 or
             (_norm(prod) and _norm(rp) and _norm(prod) == _norm(rp))   # NEW
         )
-        if not strong_signal:
+        if not strong_signal and not (
+            'id_in_text' in locals() and id_in_text
+        ):
             continue
 
         if sc > 0.5:
