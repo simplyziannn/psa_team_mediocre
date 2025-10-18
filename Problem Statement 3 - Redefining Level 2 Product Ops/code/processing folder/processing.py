@@ -50,7 +50,16 @@ def _toks(s: str) -> List[str]:
     s = _norm(s)
     s = re.sub(r"[^a-z0-9_\- ]+", " ", s)
     return [t for t in s.split() if t]
+_STOPWORDS = {
+    "a","an","and","or","the","of","to","for","on","at","in","is","was","were","be","with","by",
+    "this","that","these","those","it","as","from","into","about","over","under","up","down",
+    "your","our","their","you","we","they","i","he","she","them","us","me"
+}
 
+def _toks_domain(s: str):
+    """Like _toks, but drops stopwords and very short tokens."""
+    toks = _toks(s)
+    return [t for t in toks if len(t) >= 3 and t not in _STOPWORDS]
 # ==========================
 # Excel Case Log -> matches
 # ==========================
@@ -91,6 +100,27 @@ def _extract_codes(text: str) -> List[str]:
     if not text: return []
     pat = r"\b(?:ALR|INC|TCK|REF|CORR|ERR|ORA|SQL|HTTP|VR|VRR|COPARN|COARRI|BAPLIE)[-_]?[A-Z0-9]+(?:[-_][A-Z0-9]+)*\b"
     return sorted(set(re.findall(pat, text, flags=re.IGNORECASE)), key=str.lower)
+_CNTR_PAT = re.compile(r"\b[A-Z]{4}\d{7}\b")  # e.g., MSKU0000001
+
+def _has_ops_signals(entities: dict, text_sample: str) -> bool:
+    # signals from entities
+    if entities.get("case_ids"): 
+        return True
+    if any(x for x in (entities.get("services") or []) if x and x.upper() in {"COARRI","COPARN","BAPLIE","CODECO","COPRAR"}):
+        return True
+    if any(_CNTR_PAT.findall(" ".join(entities.get("keywords") or []))):
+        return True
+    # signals from evidence text
+    if _extract_codes(text_sample):
+        return True
+    if _CNTR_PAT.search(text_sample or ""):
+        return True
+    # subject/product keywords
+    subj_toks = set(_toks_domain(entities.get("subject") or ""))
+    ops_keywords = {"edi","coarri","coparn","baplie","codeco","coprar","container","incident","alert","error","ack","correlation","ref","api","webhook","status","latency","timeout","retry"}
+    if subj_toks & ops_keywords:
+        return True
+    return False
 
 def entities_from_alert(alert: Dict[str, Any]) -> Dict[str, Any]:
     variables = alert.get("variables", {}) or {}
@@ -132,36 +162,76 @@ def entities_from_alert(alert: Dict[str, Any]) -> Dict[str, Any]:
         "source_alert": alert,
     }
 
-def find_matching_cases(entities: Dict[str, Any], excel_path: Path, max_results: int = 10) -> List[Dict[str, Any]]:
+def find_matching_cases(entities: dict, excel_path: Path, max_results: int = 10) -> list:
     df, sheet = _load_excel_first_sheet(excel_path)
-    if df is None: return []
-    mp = _canon_cols(list(df.columns))
+    if df is None:
+        return []
 
+    # Early bail: if there are no operational signals, skip matching entirely.
+    evidence = entities.get("source_alert", {}).get("evidence", {}) if isinstance(entities.get("source_alert"), dict) else {}
+    text_sample = evidence.get("text_sample") if isinstance(evidence, dict) else ""
+    if not _has_ops_signals(entities, text_sample or ""):
+        return []
+
+    mp = _canon_cols(list(df.columns))
     subj = entities.get("subject") or ""
     prod = entities.get("product") or ""
     kws  = entities.get("keywords") or []
     ids  = set(_norm(x) for x in (entities.get("case_ids") or []))
-    kwt  = set(_toks(" ".join([subj, *kws])))
+    subj_kw_tokens = set(_toks_domain(" ".join([subj, *kws])))
 
-    out=[]
+    out = []
     for _, r in df.iterrows():
-        d = r.to_dict()
+        d  = r.to_dict()
         rs = str(d.get(mp.get("subject", "subject"), ""))
         rd = str(d.get(mp.get("description", "description"), ""))
         rp = str(d.get(mp.get("product", "product"), ""))
+
+        # Build row text and tokens (domain-only)
         text = f"{rs}\n{rd}"
+        row_tokens = set(_toks_domain(text))
+
         sc = 0.0
+        # Exact ID hit = very strong
         cid_col = mp.get("case_id")
-        if cid_col and _norm(str(d.get(cid_col,""))) in ids: sc += 100.0
-        if prod: sc += 8.0 if _norm(prod)==_norm(rp) else 5.0*_ratio(prod,rp)
-        ov = len(kwt & set(_toks(text))); sc += min(ov,10)*1.0
-        sc += 4.0*_ratio(subj, rs)
-        if sc>0.5:
-            d["_match_score"]=round(sc,3)
-            d["_sheet"]=sheet
+        id_hit = bool(cid_col and _norm(str(d.get(cid_col, ""))) in ids)
+        if id_hit:
+            sc += 100.0
+
+        # Product match: heavily down-weighted
+        if prod and prod.lower() != "none":
+            sc += 2.0 if _norm(prod) == _norm(rp) else 1.0 * _ratio(prod, rp)
+
+        # Token overlap (after stopword pruning)
+        token_overlap = len(subj_kw_tokens & row_tokens)
+        sc += min(token_overlap, 10) * 1.0
+
+        # Subject similarity
+        subj_sim = _ratio(subj, rs)
+        sc += 4.0 * subj_sim
+
+        # EDI type overlap (domain words)
+        edi_types_from_alert = {t.lower() for t in (entities.get("services") or []) if t and t.lower() != "none"}
+        edi_overlap = len(edi_types_from_alert & row_tokens)
+
+        # HARD GATE: require at least one strong signal
+        strong_signal = (
+            id_hit or
+            token_overlap >= 2 or         # needs ≥2 real overlaps
+            edi_overlap >= 1 or
+            subj_sim >= 0.35
+        )
+        if not strong_signal:
+            continue
+
+        if sc > 0.5:
+            d["_match_score"] = round(sc, 3)
+            d["_sheet"] = sheet
             out.append(d)
+
     out.sort(key=lambda x: x["_match_score"], reverse=True)
     return out[:max_results]
+
 
 # =======================
 # KB (DOCX) -> Overview
@@ -308,7 +378,7 @@ def llm_from_kb(entities: Dict[str,Any], kb_corpus: str) -> Dict[str,Any]:
         "You are a Product Ops runbook assistant. Using the Knowledge Base OVERVIEW excerpts below, "
         "derive a problem_statement, solutions, and sop relevant to the alert. JSON ONLY."
     )
-    schema={"problem_statement":"string","solutions":["string"],"SOP":["string"]}
+    schema={"problem_statement":"string","solutions":["string"],"sop":["string"]}
     user=(
         "ALERT_ENTITIES:\n"+json.dumps(entities, ensure_ascii=False)+"\n\n"
         "KB_OVERVIEWS:\n"+kb_corpus+"\n\n"
@@ -404,10 +474,11 @@ def _load_json_input(argv: List[str]) -> Dict[str,Any]:
 def _save_here(obj: Dict[str,Any], base_name="alert_result") -> Path:
     here = Path(__file__).resolve().parent
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    out = here / f"{base_name}_{ts}.json"
-    with open(out,"w",encoding="utf-8") as f:
+    out_path = os.path.join(os.path.dirname(__file__),"JSON OUTPUT",f"{base_name}_{ts}.json")
+    out = here /"JSON OUTPUT"/ f"{base_name}_{ts}.json"
+    with open(out_path,"w",encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
-    return out
+    return out_path
 
 if __name__=="__main__":
     try:

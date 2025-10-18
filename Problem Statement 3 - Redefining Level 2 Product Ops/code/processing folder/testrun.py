@@ -156,20 +156,61 @@ SAMPLE_ALERT = [{
   "confidence": 0.8
 },
 { #Minimal alert (should still run; likely KB or Escalation path)
-  "problem_statement": "System reported abnormal EDI latency",
-  "incident_type": "EDI",
+  "problem_statement": "Guan Yibin and Jermaine!! <3",
+  "incident_type": "None",
   "variables": {},
   "evidence": {
-    "text_sample": "High end-to-end latency observed across EDI deliveries."
+    "text_sample": "Yibin and Jermaine was caught mating."
   }
 },
-
 ]
+
+JERMAINE = [{ #Minimal alert (should still run; likely KB or Escalation path)
+  "problem_statement": "Guan Yibin and Jermaine!! <3",
+  "incident_type": "None",
+  "variables": {},
+  "evidence": {
+    "text_sample": "Yibin and Jermaine was caught mating."
+  }
+},
+{ #Strong Case-Log match (should use historical matches; no fallbacks)
+  "problem_statement": "EDI REF-COP-0001 stuck without ACK for MSKU0000001", 
+  "incident_type": "EDI",
+  "variables": {
+    "cntr_no": ["MSKU0000001"],
+    "message_ref": ["REF-COP-0001"],
+    "edi_types": ["COARRI", "COPARN"],
+    "terminals": ["PASIR PANJANG TERMINAL 4"],
+    "correlation_id": ["CORR-0001"],
+    "is_ack_missing_hint": True
+  },
+  "evidence": {
+    "text_sample": "ALR-861770 Email: No COARRI generated; last EDI COPARN REF-COP-0001; correlation CORR-0001."
+  },
+  "confidence": 0.97
+},
+{ #Still unresolved → Escalation PDF (module routed by incident_type / edi_types)
+  "problem_statement": "Unknown EDI error code during COPARN submission",
+  "incident_type": "EDI",
+  "variables": {
+    "cntr_no": ["MSCU7654321"],
+    "message_ref": ["REF-NOPE-0000"],
+    "edi_types": ["COPARN"],
+    "error_codes": ["ERR-UNMAPPED-422"],
+    "terminals": ["Brani"]
+  },
+  "evidence": {
+    "text_sample": "Submission to partner returns ERR-UNMAPPED-422; no hits in our knowledge base."
+  },
+  "confidence": 0.66
+}
+]
+
 
 def _save_here(obj: dict, base_name="test_alert_result") -> Path:
     here = Path(__file__).resolve().parent
     ts = datetime.now(SGT).strftime("%Y%m%dT%H%M%SZ")
-    out = here / f"{base_name}_{ts}.json"
+    out = here /"JSON OUTPUT"/ f"{base_name}_{ts}.json"
     with open(out, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
     return out
@@ -193,5 +234,6 @@ def main(json_input):
     
 if __name__ == "__main__":
     # Optional overrides:
-    for json_input in SAMPLE_ALERT:
+    #for json_input in SAMPLE_ALERT:
+    for json_input in JERMAINE:
         main(json_input)

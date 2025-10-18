@@ -1,0 +1,82 @@
+{
+  "structured_alert": {
+    "subject": "EDI REF-COP-0001 stuck without ACK for MSKU0000001",
+    "product": "EDI",
+    "error_codes": [],
+    "services": [
+      "COARRI",
+      "COPARN",
+      "EDI"
+    ],
+    "keywords": [
+      "MSKU0000001",
+      "PASIR PANJANG TERMINAL 4",
+      "COARRI",
+      "COPARN",
+      "CORR-0001",
+      "REF-COP-0001",
+      "ack missing",
+      "missing ack",
+      "no ack",
+      "ALR-861770",
+      "CORR-0001",
+      "correlation",
+      "REF-COP-0001"
+    ],
+    "case_ids": [
+      "REF-COP-0001",
+      "CORR-0001",
+      "ALR-861770",
+      "CORR-0001",
+      "correlation",
+      "REF-COP-0001"
+    ],
+    "summary": "EDI REF-COP-0001 stuck without ACK for MSKU0000001",
+    "source_alert": {
+      "problem_statement": "EDI REF-COP-0001 stuck without ACK for MSKU0000001",
+      "incident_type": "EDI",
+      "variables": {
+        "cntr_no": [
+          "MSKU0000001"
+        ],
+        "message_ref": [
+          "REF-COP-0001"
+        ],
+        "edi_types": [
+          "COARRI",
+          "COPARN"
+        ],
+        "terminals": [
+          "PASIR PANJANG TERMINAL 4"
+        ],
+        "correlation_id": [
+          "CORR-0001"
+        ],
+        "is_ack_missing_hint": true
+      },
+      "evidence": {
+        "text_sample": "ALR-861770 Email: No COARRI generated; last EDI COPARN REF-COP-0001; correlation CORR-0001."
+      },
+      "confidence": 0.97
+    }
+  },
+  "matches": [],
+  "excel_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Case Log.xlsx",
+  "kb_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
+  "escalation_pdf": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Product Team Escalation Contacts.pdf",
+  "timestamp": "2025-10-18T19:13:56+08:00",
+  "kb_used": true,
+  "escalation_used": true,
+  "llm_analysis": {
+    "problem_statement": "",
+    "solutions": [],
+    "sop": [],
+    "escalation": {
+      "contacts": [],
+      "procedure": [],
+      "notes": null,
+      "source": "escalation_contacts"
+    },
+    "suggested_escalation": null
+  }
+}
