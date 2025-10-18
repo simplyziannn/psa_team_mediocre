@@ -1,0 +1,113 @@
+CASE 1
+{
+  "problem_statement": "Duplicate container information reported for CMAU00000020.",
+  "incident_type": "ContainerData",
+  "variables": {
+    "container_ids": ["CMAU00000020"],
+    "edi_refs": [],
+    "error_codes": [],
+    "vessel_names": [],
+    "voyages": [],
+    "terminals": [],
+    "is_duplicate_hint": true,
+    "is_ack_missing_hint": false
+  },
+  "evidence": {
+    "flags": {
+      "duplicate": true,
+      "ack_missing": false,
+      "baplie": false,
+      "coarri": false,
+      "error": false,
+      "stuck": false
+    },
+    "text_sample": "Email ALR-861600 | CMAU00000020 - Duplicate Container information received. Hi Jen, Please assist in checking container CMAU00000020. Customer on PORTNET is seeing 2 identical containers information."
+  },
+  "confidence": 0.65
+}
+
+CASE 2
+{
+  "problem_statement": "System error VESSEL_ERR_4 encountered. Vessel: MV LION CITY 07.",
+  "incident_type": "VesselAdvice",
+  "variables": {
+    "container_ids": [],
+    "edi_refs": [],
+    "error_codes": ["VESSEL_ERR_4"],
+    "vessel_names": ["MV LION CITY 07"],
+    "voyages": ["07E"],
+    "terminals": [],
+    "is_duplicate_hint": false,
+    "is_ack_missing_hint": false
+  },
+  "evidence": {
+    "flags": {
+      "duplicate": false,
+      "ack_missing": false,
+      "baplie": false,
+      "coarri": false,
+      "error": true,
+      "stuck": false
+    },
+    "text_sample": "Email ALR-861631 | VESSEL_ERR_4 - System Vessel Name has been used by other vessel advice. Customer reported unable to create vessel advice for MV Lion City 07 and hit error VESSEL_ERR_4. The local vessel name had been used by other vessel advice."
+  },
+  "confidence": 0.7
+}
+
+
+CASE 3
+{
+  "problem_statement": "EDI REF-IFT-0007 stuck without ACK.",
+  "incident_type": "EDI",
+  "variables": {
+    "container_ids": [],
+    "edi_refs": ["REF-IFT-0007"],
+    "error_codes": [],
+    "vessel_names": [],
+    "voyages": [],
+    "terminals": [],
+    "is_duplicate_hint": false,
+    "is_ack_missing_hint": true
+  },
+  "evidence": {
+    "flags": {
+      "duplicate": false,
+      "ack_missing": true,
+      "baplie": false,
+      "coarri": false,
+      "error": true,
+      "stuck": true
+    },
+    "text_sample": "EDI message REF-IFT-0007 stuck in ERROR status (Sender: LINE-PSA, Recipient: PSA-TOS, State: No acknowledgment sent, ack_at is NULL)."
+  },
+  "confidence": 0.75
+}
+
+
+CASE 4 
+{
+  "problem_statement": "BAPLIE inconsistency detected for MV PACIFIC DAWN/07E at Pasir Panjang Terminal 4.",
+  "incident_type": "BAPLIE",
+  "variables": {
+    "container_ids": [],
+    "edi_refs": [],
+    "error_codes": [],
+    "vessel_names": ["MV PACIFIC DAWN"],
+    "voyages": ["07E"],
+    "terminals": ["Pasir Panjang Terminal 4"],
+    "is_duplicate_hint": false,
+    "is_ack_missing_hint": false
+  },
+  "evidence": {
+    "flags": {
+      "duplicate": false,
+      "ack_missing": false,
+      "baplie": true,
+      "coarri": true,
+      "error": false,
+      "stuck": false
+    },
+    "text_sample": "BAPLIE inconsistency for MV PACIFIC DAWN/07E at Pasir Panjang Terminal 4: COARRI shows load completed for bay 14, but BAPLIE still lists units in those slots."
+  },
+  "confidence": 0.8
+}
