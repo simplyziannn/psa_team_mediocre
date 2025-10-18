@@ -1,4 +1,4 @@
-import os, re, json
+﻿import os, re, json
 from datetime import datetime
 from difflib import SequenceMatcher
 from typing import Any
@@ -8,6 +8,9 @@ from LLM_folder.call_openai_basic import ask_gpt5
 
 DEFAULT_EXCEL_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "Info", "Case Log.xlsx"
+)
+DEFAULT_KB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "Info", "Knowledge Base.docx"
 )
 
 
@@ -150,15 +153,25 @@ def process_email(email_info: Any, excel_path: str = DEFAULT_EXCEL_PATH, max_res
         email_text = str(email_info)
     ents = extract_email_entities(email_text)
     matches = find_matching_cases(ents, excel_path=excel_path, max_results=max_results)
-    llm_analysis = generate_problem_and_sop(ents, matches)
+    kb_used = False
+    if not matches:
+        print("No historical case log found. Running Knowledge Base docx...")
+        kb_obj = _kb_fallback(ents, matches, DEFAULT_KB_PATH)
+        if kb_obj:
+            llm_analysis = kb_obj
+            kb_used = True
+        else:
+            llm_analysis = generate_problem_and_sop(ents, matches)
+    else:
+        llm_analysis = generate_problem_and_sop(ents, matches)
     return {
         "structured_email": ents,
         "matches": matches,
         "llm_analysis": llm_analysis,
         "excel_path": excel_path,
+        "kb_fallback_used": kb_used,
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
-
 
 def _safe_row_summary(row: dict, max_len: int = 500) -> str:
     # Prefer common fields first
@@ -245,7 +258,207 @@ def generate_problem_and_sop(structured_email: dict, matches: list) -> dict:
     obj.setdefault("related_case_ids", related_ids)
     obj.setdefault("assumptions", [])
     obj.setdefault("suggested_escalation", None)
+    obj.setdefault("source", "direct")
+
+    # Fallback: If no meaningful output, try leveraging the Knowledge Base
+    needs_kb = (not obj.get("problem_statement")) or (not obj.get("sop"))
+    if needs_kb:
+        kb_obj = _kb_fallback(structured_email, matches, DEFAULT_KB_PATH)
+        if kb_obj:
+            # Merge keeping non-empty fields
+            for k in [
+                "problem_statement",
+                "likely_cause",
+                "priority",
+                "sop",
+                "related_case_ids",
+                "assumptions",
+                "suggested_escalation",
+            ]:
+                if not obj.get(k) and kb_obj.get(k):
+                    obj[k] = kb_obj[k]
+            obj["source"] = "kb_fallback"
+            obj["kb_path"] = DEFAULT_KB_PATH
     return obj
+
+
+def _read_kb_docx(kb_path: str) -> str:
+    try:
+        from docx import Document  # python-docx
+    except Exception:
+        return ""
+    if not os.path.exists(kb_path):
+        return ""
+    try:
+        doc = Document(kb_path)
+        parts = []
+        for p in doc.paragraphs:
+            t = (p.text or "").strip()
+            if t:
+                parts.append(t)
+        return "\n".join(parts)
+    except Exception:
+        return ""
+
+
+def _kb_extract_relevant(kb_text: str, terms: list, max_chars: int = 15000) -> str:
+    if not kb_text:
+        return ""
+    if not terms:
+        return kb_text[:max_chars]
+    chunks = re.split(r"\n\s*\n+", kb_text)
+    sel = []
+    terms_l = [t.lower() for t in terms if t]
+    for ch in chunks:
+        cl = ch.lower()
+        if any(t in cl for t in terms_l):
+            sel.append(ch)
+        if sum(len(s) for s in sel) >= max_chars:
+            break
+    if not sel:
+        return kb_text[:max_chars]
+    out = "\n\n".join(sel)
+    return out[:max_chars]
+
+
+def _read_kb_sections(kb_path: str) -> list:
+    """
+    Read Knowledge Base docx and split into sections using Heading paragraphs.
+    Returns a list of dicts: {title, overview, content} where overview is extracted
+    from paragraphs labeled 'Overview' or the first paragraph when no explicit
+    label exists.
+    """
+    try:
+        from docx import Document
+    except Exception:
+        return []
+    if not os.path.exists(kb_path):
+        return []
+    try:
+        doc = Document(kb_path)
+        sections = []
+        current = {"title": None, "paras": []}
+        for p in doc.paragraphs:
+            text = (p.text or "").strip()
+            if not text:
+                continue
+            style = getattr(p.style, "name", "") or ""
+            if style.lower().startswith("heading"):
+                if current["title"] or current["paras"]:
+                    sections.append(current)
+                current = {"title": text, "paras": []}
+            else:
+                current["paras"].append(text)
+        if current["title"] or current["paras"]:
+            sections.append(current)
+
+        # Build overview/content strings
+        out = []
+        for s in sections:
+            title = s.get("title") or "Untitled"
+            paras = s.get("paras") or []
+            overview = []
+            in_overview = False
+            for t in paras:
+                low = t.lower()
+                if low.startswith("overview:") or low == "overview":
+                    in_overview = True
+                    # Remove the leading label
+                    ov = t.split(":", 1)[-1].strip()
+                    if ov:
+                        overview.append(ov)
+                    continue
+                # Stop overview if we hit a likely subheading
+                if in_overview and (low.endswith(":") or low in {"steps", "procedure", "runbook", "resolution"}):
+                    break
+                if in_overview:
+                    overview.append(t)
+            # If no explicit overview, take the first paragraph as a brief overview
+            if not overview and paras:
+                overview = [paras[0]]
+            out.append({
+                "title": title,
+                "overview": " ".join(overview).strip(),
+                "content": "\n".join(paras).strip(),
+            })
+        return out
+    except Exception:
+        return []
+
+
+def _kb_overview_corpus(kb_path: str, terms: list, max_chars: int = 12000) -> str:
+    """Assemble a corpus consisting of Title + Overview for matching sections."""
+    sections = _read_kb_sections(kb_path)
+    if not sections:
+        # fallback to plain text mode
+        return _kb_extract_relevant(_read_kb_docx(kb_path), terms, max_chars)
+    terms_l = [t.lower() for t in (terms or []) if t]
+    picks = []
+    for s in sections:
+        blob = (s.get("title", "") + "\n" + s.get("overview", "")).lower()
+        if not terms_l or any(t in blob for t in terms_l):
+            title = s.get("title") or "Untitled"
+            overview = s.get("overview") or ""
+            picks.append(f"Title: {title}\nOverview: {overview}".strip())
+        if sum(len(x) for x in picks) >= max_chars:
+            break
+    if not picks:
+        # If nothing matched on titles/overviews, include first few overviews
+        for s in sections[:5]:
+            title = s.get("title") or "Untitled"
+            overview = s.get("overview") or ""
+            picks.append(f"Title: {title}\nOverview: {overview}".strip())
+            if sum(len(x) for x in picks) >= max_chars:
+                break
+    corpus = "\n\n".join(picks)
+    return corpus[:max_chars]
+
+
+def _kb_fallback(structured_email: dict, matches: list, kb_path: str) -> dict:
+    # Build terms from entities
+    terms = []
+    terms += structured_email.get("keywords", []) or []
+    terms += structured_email.get("services", []) or []
+    terms += structured_email.get("error_codes", []) or []
+    terms += structured_email.get("case_ids", []) or []
+    corpus = _kb_overview_corpus(kb_path, terms)
+    if not corpus:
+        return {}
+
+    # Use KB content to synthesize Problem + SOP
+    system = (
+        "You are a Level 2 Product Ops assistant. Using the provided knowledge "
+        "base OVERVIEW excerpts and the incoming alert, produce a concise Problem Statement "
+        "and an actionable SOP. If KB guidance is not directly applicable, infer "
+        "best practices clearly. Respond ONLY with minified JSON."
+    )
+    schema_hint = {
+        "problem_statement": "string",
+        "likely_cause": "string|null",
+        "priority": "P1|P2|P3|Unknown",
+        "sop": ["step 1", "step 2", "..."],
+        "related_case_ids": ["string"],
+        "assumptions": ["string"],
+        "suggested_escalation": "string|null",
+    }
+    user = (
+        "Incoming alert (structured):\n" + json.dumps(structured_email, ensure_ascii=False) + "\n\n" +
+        "Relevant KB Overviews (Title + Overview only):\n" + corpus + "\n\n" +
+        "Produce JSON with fields: " + json.dumps(schema_hint) + ". "
+    )
+    raw = ask_gpt5(user, system_prompt=system, max_completion_tokens=2048)
+    kb_obj = _to_json(raw) or {}
+    if not kb_obj:
+        return {}
+    kb_obj.setdefault("problem_statement", "")
+    kb_obj.setdefault("likely_cause", None)
+    kb_obj.setdefault("priority", "Unknown")
+    kb_obj.setdefault("sop", [])
+    kb_obj.setdefault("related_case_ids", [])
+    kb_obj.setdefault("assumptions", [])
+    kb_obj.setdefault("suggested_escalation", None)
+    kb_obj["source"] = "kb_fallback"
+    return kb_obj
 
 
 # === New JSON alert entrypoint ===
@@ -258,25 +471,34 @@ def _extract_codes(text: str) -> list:
 
 
 def entities_from_alert(alert: dict) -> dict:
-    """Map a structured alert JSON to the matcher 'entities' shape."""
+    """
+    Map a structured alert JSON to the matcher 'entities' shape.
+    Supports old and new keys: container_ids|cntr_no, edi_refs|message_ref,
+    vessel_names|vessel_name, correlation_id.
+    """
     variables = alert.get("variables", {}) or {}
     evidence = alert.get("evidence", {}) or {}
-    flags = (evidence.get("flags") or {}) if isinstance(evidence, dict) else {}
     text_sample = (evidence.get("text_sample") or "") if isinstance(evidence, dict) else ""
 
-    # Build keywords from variables and flags
-    kw = []
-    def add_list(xs):
-        for x in (xs or []):
-            if x:
-                kw.append(str(x))
+    def get_list(*keys):
+        out = []
+        for k in keys:
+            v = variables.get(k)
+            if isinstance(v, list):
+                out.extend([str(x) for x in v if x])
+            elif isinstance(v, str) and v:
+                out.append(v)
+        return out
 
-    add_list(variables.get("container_ids"))
-    add_list(variables.get("edi_refs"))
-    add_list(variables.get("vessel_names"))
-    add_list(variables.get("voyages"))
-    add_list(variables.get("terminals"))
-    add_list(variables.get("edi_types"))
+    # Build keywords from variables and flags (supports new names)
+    kw = []
+    kw += get_list("container_ids", "cntr_no")
+    kw += get_list("edi_refs", "message_ref")
+    kw += get_list("vessel_names", "vessel_name")
+    kw += get_list("voyages")
+    kw += get_list("terminals")
+    kw += get_list("edi_types")
+    kw += get_list("correlation_id")
     if variables.get("is_duplicate_hint"):
         kw.append("duplicate")
     if variables.get("is_ack_missing_hint"):
@@ -287,18 +509,18 @@ def entities_from_alert(alert: dict) -> dict:
 
     # Services: use edi_types and incident type
     services = []
-    # Populate from EDI types and incident type
-    for s in (variables.get("edi_types") or []):
-        services.append(str(s))
+    for s in get_list("edi_types"):
+        services.append(s)
     if alert.get("incident_type"):
         services.append(str(alert.get("incident_type")))
 
     # Error codes
-    error_codes = variables.get("error_codes") or []
+    error_codes = get_list("error_codes")
 
-    # Case ids: include obvious looking codes from evidence and refs
+    # Case ids: include message refs, correlation ids, and extracted codes
     case_ids = []
-    case_ids += [x for x in (variables.get("edi_refs") or []) if x]
+    case_ids += get_list("edi_refs", "message_ref")
+    case_ids += get_list("correlation_id")
     case_ids += _extract_codes(text_sample)
 
     subject = alert.get("problem_statement") or (alert.get("incident_type") or "Alert")
@@ -316,7 +538,7 @@ def entities_from_alert(alert: dict) -> dict:
         "probable_issue": ("ACK missing" if variables.get("is_ack_missing_hint") else None),
         "suspected_component": None,
         "summary": summary,
-        "source_alert": alert,  # keep full alert for LLM prompt context
+        "source_alert": alert,
     }
     return entities
 
@@ -337,11 +559,22 @@ def process_alert_json(alert: Any, excel_path: str = DEFAULT_EXCEL_PATH, max_res
 
     entities = entities_from_alert(alert_obj)
     matches = find_matching_cases(entities, excel_path=excel_path, max_results=max_results)
-    llm_analysis = generate_problem_and_sop(entities, matches)
+    kb_used = False
+    if not matches:
+        print("No historical case log found. Running Knowledge Base docx...")
+        kb_obj = _kb_fallback(entities, matches, DEFAULT_KB_PATH)
+        if kb_obj:
+            llm_analysis = kb_obj
+            kb_used = True
+        else:
+            llm_analysis = generate_problem_and_sop(entities, matches)
+    else:
+        llm_analysis = generate_problem_and_sop(entities, matches)
     return {
         "structured_alert": entities,
         "matches": matches,
         "llm_analysis": llm_analysis,
         "excel_path": excel_path,
+        "kb_fallback_used": kb_used,
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
