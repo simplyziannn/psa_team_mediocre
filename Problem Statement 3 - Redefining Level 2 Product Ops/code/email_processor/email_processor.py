@@ -417,7 +417,9 @@ def process_any(payload: Any) -> ProblemDraft:
                 or _safe_attr(payload, "content")
                 or "")
 
-    return json.dumps(process_email(subj, body).to_dict(), indent=2)
+    # Return the ProblemDraft object (not a JSON string) so callers can inspect
+    # the dataclass programmatically. Callers can serialize with .to_dict().
+    return process_email(subj, body)
 
 
 
@@ -444,7 +446,10 @@ def process_many(items: List[Any]) -> List[Dict[str, Any]]:
     out = []
     for it in items:
         try:
-            out.append(process_any(it).to_dict())
+            pd = process_any(it)
+            # If process_any returns a ProblemDraft, convert to dict; if it
+            # somehow returns a dict already, use it directly.
+            out.append(pd.to_dict() if hasattr(pd, "to_dict") else dict(pd))
         except Exception as e:
             out.append({"error": f"failed to process item: {e}", "input_preview": str(it)[:160]})
     return out
@@ -459,8 +464,13 @@ if __name__ == "__main__":
     #   print(json.dumps(result.to_dict(), indent=2))
     # ----------------------------------------------
     sample = "COARRI REF-ARR-0013 not acked for OOLU0000013 at PPT4."
-    result = process_any(sample)
-    print(result)
+    # process_any now returns a ProblemDraft object. Print its dict as JSON.
+    result_pd = process_any(sample)
+    try:
+        print(json.dumps(result_pd.to_dict(), indent=2))
+    except Exception:
+        # Fallback: print repr
+        print(repr(result_pd))
 
 
 

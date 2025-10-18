@@ -10,6 +10,7 @@ from pathlib import Path
 import importlib.util
 import json
 import sys
+import argparse
 
 
 def load_module_from_path(name: str, path: Path):
@@ -38,7 +39,21 @@ def main():
 	query_mod = load_module_from_path('query_seed', query_path)
 
 	# Read input string: if piped, read all stdin; otherwise interactive prompt
-	if not sys.stdin.isatty():
+	parser = argparse.ArgumentParser(description='Process an email-like text and query seed data.')
+	parser.add_argument('-t', '--text', help='Email text to process (prefer this over interactive paste).')
+	parser.add_argument('-f', '--file', help='Path to a file containing the email text.')
+	args = parser.parse_args()
+
+	if args.text:
+		text = args.text.strip()
+	elif args.file:
+		try:
+			text = Path(args.file).read_text(encoding='utf-8').strip()
+		except Exception as e:
+			print(json.dumps({"error": f"Failed to read file: {e}"}, indent=2))
+			sys.exit(1)
+	elif not sys.stdin.isatty():
+		# piped input
 		text = sys.stdin.read().strip()
 	else:
 		try:
