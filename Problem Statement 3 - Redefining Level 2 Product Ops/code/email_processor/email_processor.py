@@ -417,7 +417,8 @@ def process_any(payload: Any) -> ProblemDraft:
                 or _safe_attr(payload, "content")
                 or "")
 
-    return process_email(subj, body)
+    return json.dumps(process_email(subj, body).to_dict(), indent=2)
+
 
 
 def _safe_attr(obj: Any, name: str) -> Optional[str]:
@@ -459,7 +460,7 @@ if __name__ == "__main__":
     # ----------------------------------------------
     sample = "COARRI REF-ARR-0013 not acked for OOLU0000013 at PPT4."
     result = process_any(sample)
-    print(json.dumps(result.to_dict(), indent=2))
+    print(result)
 
 
 
@@ -488,5 +489,5 @@ if __name__ == "__main__":
     for i, (subj, body) in enumerate(tests, 1):
         result = process_email(subj, body)
         print(f"\n---- CASE {i} ----")
-        print(json.dumps(result.to_dict(), indent=2))
-"""
+        print(result)
+        #print(json.dumps(result.to_dict(), indent=2))"""
