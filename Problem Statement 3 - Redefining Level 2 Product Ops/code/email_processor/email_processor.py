@@ -467,8 +467,8 @@ if __name__ == "__main__":
 """if __name__ == "__main__":
     tests: List[Tuple[str, str]] = [
         # CASE 1 — Duplicate Container
-        ("Email ALR-861600 | CMAU00000020 - Duplicate Container information received",
-         "Hi Jen, Please assist in checking container CMAU00000020. Customer on PORTNET is seeing 2 identical containers information."),
+        ("Email ALR-861600 | CMAU0000020 - Duplicate Container information received",
+         "Hi Jen, Please assist in checking container CMAU0000020. Customer on PORTNET is seeing 2 identical containers information."),
         # CASE 2 — VESSEL_ERR_4 / Vessel Advice
         ("Email ALR-861631 | VESSEL_ERR_4 - System Vessel Name has been used by other vessel advice",
          "Customer reported unable to create vessel advice for MV Lion City 07/07E and hit error VESSEL_ERR_4. The local vessel name had been used by other vessel advice."),
