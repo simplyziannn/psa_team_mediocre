@@ -1,78 +1,50 @@
 {
   "structured_alert": {
-    "subject": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "subject": "Unknown EDI error code during COPARN submission",
     "product": "EDI",
-    "error_codes": [],
+    "error_codes": [
+      "ERR-UNMAPPED-422"
+    ],
     "services": [
-      "COARRI",
       "COPARN",
       "EDI"
     ],
     "keywords": [
-      "MSKU0000001",
-      "PASIR PANJANG TERMINAL 4",
-      "COARRI",
+      "MSCU7654321",
+      "Brani",
       "COPARN",
-      "CORR-0001",
-      "REF-COP-0001",
-      "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-",
-      "ack missing",
-      "missing ack",
-      "no ack",
-      "ALR-861770",
-      "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "REF-NOPE-0000",
+      "ERR-UNMAPPED-422"
     ],
     "case_ids": [
-      "REF-COP-0001",
-      "CORR-0001",
-      "ALR-861770",
-      "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "REF-NOPE-0000",
+      "ERR-UNMAPPED-422"
     ],
-    "summary": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "summary": "Unknown EDI error code during COPARN submission",
     "source_alert": {
-      "problem_statement": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+      "problem_statement": "Unknown EDI error code during COPARN submission",
       "incident_type": "EDI",
       "variables": {
         "cntr_no": [
-          "MSKU0000001"
+          "MSCU7654321"
         ],
         "message_ref": [
-          "REF-COP-0001"
+          "REF-NOPE-0000"
         ],
-        "error_codes": [],
-        "vessel_name": [
-          "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-"
-        ],
-        "voyages": [],
-        "terminals": [
-          "PASIR PANJANG TERMINAL 4"
-        ],
-        "correlation_id": [
-          "CORR-0001"
-        ],
-        "is_duplicate_hint": false,
-        "is_ack_missing_hint": true,
         "edi_types": [
-          "COARRI",
           "COPARN"
+        ],
+        "error_codes": [
+          "ERR-UNMAPPED-422"
+        ],
+        "terminals": [
+          "Brani"
         ]
       },
       "evidence": {
-        "flags": {
-          "duplicate": false,
-          "ack_missing": true,
-          "baplie": false,
-          "coarri": true,
-          "error": false,
-          "stuck": false
-        },
-        "text_sample": "EMAIL ALR-861770 | CORR-0001 — DISCHARGE NOT REFLECTED FOR MSKU0000001 ... Last EDI = COPARN REF-COP-0001 ..."
+        "text_sample": "Submission to partner returns ERR-UNMAPPED-422; no hits in our knowledge base."
       },
-      "confidence": 0.98
+      "confidence": 0.66
     }
   },
   "matches": [
@@ -200,27 +172,25 @@
   "excel_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Case Log.xlsx",
   "kb_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
   "escalation_pdf": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Product Team Escalation Contacts.pdf",
-  "timestamp": "2025-10-18T18:18:45+08:00",
+  "timestamp": "2025-10-18T18:34:19+08:00",
   "kb_used": false,
   "escalation_used": false,
   "llm_analysis": {
-    "problem_statement": "EDI COPARN message REF-COP-0001 has no ACK; discharge for container MSKU0000001 on MV LION CITY 01 at Pasir Panjang Terminal 4 (correlation CORR-0001) is not reflected.",
+    "problem_statement": "COPARN submission for container MSCU7654321 (message REF-NOPE-0000) returns an unrecognized partner error code ERR-UNMAPPED-422 at Brani; no KB entry or automated handling exists.",
     "solutions": [
-      "Verify EDI gateway/outbound logs for REF-COP-0001 and confirm ACK missing. If transient error, resend COPARN with same ref.",
-      "If resend fails or no ACK, notify terminal/partner operations with correlation CORR-0001 and request immediate ACK/ingest confirmation.",
-      "Compare COARRI and COPARN payloads for MSKU0000001 to ensure consistent payload; correct and reprocess if payload mismatch found.",
-      "If partner cannot provide ACK or reprocess, perform manual status update in downstream system for discharge (record as temporary manual fix) and document cause.",
-      "If unresolved >30 minutes after actions above, escalate to L3 EDI + partner technical contact with logs, timestamps, message refs (REF-COP-0001) and correlation id (CORR-0001)."
+      "Triage: pull the original EDI payload and partner response for REF-NOPE-0000 from exchange logs, capture timestamps, headers, and full response body; confirm terminal=Brani and EDI type=COPARN.",
+      "Quick reproduce: resend the same payload to the partner sandbox (or production if no sandbox) to confirm deterministic behavior. Try normalized payload (trim whitespace/line endings, validate segment terminators) and record outcomes.",
+      "Immediate mitigation: if time-sensitive, re-submit via alternate approved channel (portal/API/manual intake) and create a temporary manual acceptance workflow for MSCU7654321 while investigation is open; tag all transactions with the original message_ref.",
+      "Permanent fix: open a partner-developer ticket with payload, response, timestamps, and ask partner to define ERR-UNMAPPED-422 semantics. Once defined, update our error-code mapping and parser to handle the code (map to actionable status and retry policy), add tests, and deploy.",
+      "Knowledge update: add ERR-UNMAPPED-422 to internal KB with replication steps, handling policy (retry vs block), and link to partner ticket."
     ],
     "sop": [
-      "1) Triage: confirm missing ACK flag in alert and collect identifiers: REF-COP-0001, CORR-0001, MSKU0000001, terminal Pasir Panjang T4, vessel MV LION CITY 01.",
-      "2) Check systems: inspect EDI gateway/outbound queue, message status, retries, and partner endpoint response logs (include timestamps).",
-      "3) Resend: if network/partner transient issue, resend COPARN (same ref if allowed). Record resend time and ticket note.",
-      "4) Partner contact: send standardized notification to terminal/line ops including correlation id, container, vessel, original ref and request ACK or ingestion confirmation.",
-      "5) Payload validation: fetch original COARRI and COPARN; if mismatch fix source data and reprocess COPARN.",
-      "6) Manual mitigation: if business needs immediate reflect and partner cannot ACK, update downstream status manually and mark as temporary with justification.",
-      "7) Escalation: after 30 minutes or failed resend, escalate to L3 EDI + partner tech with logs, full payloads, and timeline. Attach alert ALR-861770 to case.",
-      "8) Closure: close case only after ACK received and discharge reflected in target system; add post-mortem if root cause is systemic."
+      "1) Verify and collect: retrieve exchange logs for REF-NOPE-0000, EDI payload, partner response, container MSCU7654321 metadata, and system timestamps. Save artifacts to case.",
+      "2) Reproduce: resend to partner sandbox with identical payload; if sandbox unavailable, perform controlled re-submit in production with monitoring. Note deterministic vs intermittent behavior.",
+      "3) Analyze: check our error-code mapping table, EDI schema/version, and parser logic for unhandled codes; search KB for similar codes and past cases (tags: COPARN, ERR-UNMAPPED).",
+      "4) Escalate: open partner support ticket including payload, partner response, logs, and reproduction results; request error semantics and recommended remediation from partner.",
+      "5) Implement fix: based on partner guidance, add mapping/handler in code, update retry policy and tests, deploy change, and run end-to-end COPARN submission tests for Brani.",
+      "6) Close & document: update KB with code definition, SOP for future occurrences, link partner ticket and case ID, notify stakeholders, and monitor related submissions for 48 hours."
     ],
     "source": "matches",
     "suggested_escalation": null

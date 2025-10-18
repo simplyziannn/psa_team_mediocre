@@ -1,78 +1,41 @@
 {
   "structured_alert": {
-    "subject": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "subject": "BAPLIE parsing failure for latest vessel call",
     "product": "EDI",
-    "error_codes": [],
+    "error_codes": [
+      "ORA-00942"
+    ],
     "services": [
-      "COARRI",
-      "COPARN",
+      "BAPLIE",
       "EDI"
     ],
     "keywords": [
-      "MSKU0000001",
-      "PASIR PANJANG TERMINAL 4",
-      "COARRI",
-      "COPARN",
-      "CORR-0001",
-      "REF-COP-0001",
-      "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-",
-      "ack missing",
-      "missing ack",
-      "no ack",
-      "ALR-861770",
-      "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "BAPLIE",
+      "MV TESTER",
+      "ORA-00942"
     ],
     "case_ids": [
-      "REF-COP-0001",
-      "CORR-0001",
-      "ALR-861770",
-      "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "ORA-00942"
     ],
-    "summary": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "summary": "BAPLIE parsing failure for latest vessel call",
     "source_alert": {
-      "problem_statement": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+      "problem_statement": "BAPLIE parsing failure for latest vessel call",
       "incident_type": "EDI",
       "variables": {
-        "cntr_no": [
-          "MSKU0000001"
-        ],
-        "message_ref": [
-          "REF-COP-0001"
-        ],
-        "error_codes": [],
         "vessel_name": [
-          "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-"
+          "MV TESTER"
         ],
-        "voyages": [],
-        "terminals": [
-          "PASIR PANJANG TERMINAL 4"
-        ],
-        "correlation_id": [
-          "CORR-0001"
-        ],
-        "is_duplicate_hint": false,
-        "is_ack_missing_hint": true,
         "edi_types": [
-          "COARRI",
-          "COPARN"
+          "BAPLIE"
+        ],
+        "error_codes": [
+          "ORA-00942"
         ]
       },
       "evidence": {
-        "flags": {
-          "duplicate": false,
-          "ack_missing": true,
-          "baplie": false,
-          "coarri": true,
-          "error": false,
-          "stuck": false
-        },
-        "text_sample": "EMAIL ALR-861770 | CORR-0001 — DISCHARGE NOT REFLECTED FOR MSKU0000001 ... Last EDI = COPARN REF-COP-0001 ..."
+        "text_sample": "BAPLIE load failed with ORA-00942: table or view does not exist. Need standard recovery steps."
       },
-      "confidence": 0.98
+      "confidence": 0.8
     }
   },
   "matches": [
@@ -200,26 +163,27 @@
   "excel_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Case Log.xlsx",
   "kb_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
   "escalation_pdf": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Product Team Escalation Contacts.pdf",
-  "timestamp": "2025-10-18T10:11:45.369104Z",
+  "timestamp": "2025-10-18T18:34:41+08:00",
   "kb_used": false,
   "escalation_used": false,
   "llm_analysis": {
-    "problem_statement": "COPARN message REF-COP-0001 for MSKU0000001 (MV LION CITY 01, CORR-0001) was sent to Pasir Panjang Terminal 4 but no ACK/CONTRL received; discharge not reflected.",
+    "problem_statement": "BAPLIE parsing failed for vessel MV TESTER during EDI load due to ORA-00942 (table or view does not exist).",
     "solutions": [
-      "Confirm ACK missing by searching EDI logs for REF-COP-0001 and CONTRL responses; capture timestamps and status.",
-      "If outbound shows not sent or errored, requeue/resend COPARN REF-COP-0001 (preserve CORR-0001) and monitor for ACK.",
-      "If outbound shows delivered but no ACK, contact terminal/connectivity team with REF-COP-0001, CORR-0001, MSKU0000001 and request ACK or manual confirmation.",
-      "If terminal cannot produce ACK, request manual ACK generation or create internal discharge confirmation to update downstream systems.",
-      "If repeats or systemic, open EDI incident/ticket (include ALR-861770, logs, COARRI/COPARN payloads) and escalate to EDI platform and carrier ops."
+      "Validate the BAPLIE file for format/corruption; request resend if invalid.",
+      "Inspect parser/application logs to capture the exact SQL and missing object name.",
+      "On the DB: confirm the object exists and owner with SELECT owner,object_name FROM all_objects WHERE object_name=UPPER('<OBJECT_NAME>'); restore or recreate table from DDL if missing.",
+      "If object exists but inaccessible: grant required privileges to the app user or create a synonym (e.g. GRANT SELECT, INSERT ON OWNER.<OBJ> TO APP_USER; or CREATE SYNONYM APP_USER.<OBJ> FOR OWNER.<OBJ> ).",
+      "Restart EDI/BAPLIE parser service and reprocess the file for MV TESTER; if still failing, escalate to DBA with logs, SQL stack trace, and file sample."
     ],
     "sop": [
-      "1) Search EDI system for message_ref=REF-COP-0001 and correlation_id=CORR-0001; record send timestamp, delivery receipts, and any errors.",
-      "2) Check ACK/CONTRL queue for matching ACK; verify no filtering/transform rules dropped it.",
-      "3) Verify COARRI pairing for MSKU0000001 — ensure both COARRI and COPARN processed consistently.",
-      "4) If message not sent or failed, requeue/resend COPARN; log attempt ID and notify stakeholders.",
-      "5) If sent but no ACK, escalate to terminal connectivity and operations (include COPARN payload, CORR-0001, ALR-861770) and request ACK or manual confirmation.",
-      "6) If terminal cannot supply ACK, apply manual confirmation workflow to reflect discharge in system and prevent duplicate actions.",
-      "7) Close with root-cause note, attach logs, and update case references (REF-COP-0001, CORR-0001, ALR-861770)."
+      "1) Gather evidence: save failing BAPLIE file and note alert text/sample.",
+      "2) Fetch parser logs (e.g. /var/log/edi/* or application log) and extract the SQL error and object name causing ORA-00942.",
+      "3) DB investigation (run as DBA): SELECT owner,object_name,object_type FROM all_objects WHERE object_name=UPPER('<OBJECT_NAME>');",
+      "4) If object missing: retrieve DDL from repo/migrations and run CREATE TABLE ... as per environment; if not available, restore from backup; document change.",
+      "5) If object present but permission issue: run GRANT SELECT, INSERT, UPDATE ON OWNER.<OBJ> TO APP_USER; or CREATE SYNONYM APP_USER.<OBJ> FOR OWNER.<OBJ>.",
+      "6) Restart parser: systemctl restart edi-parser (or service-specific command) and re-ingest: /opt/edi/bin/ingest --file /path/to/<file>.baplie --vessel \"MV TESTER\"; monitor logs for success.",
+      "7) If unresolved, escalate to DBA with: failing BAPLIE file, parser logs, exact SQL causing ORA-00942, DB query outputs, and timestamp.",
+      "8) Post-incident: add preflight checks (DB object existence & privileges) to deployment checklist and add monitoring/alerting for ORA-00942 on EDI services."
     ],
     "source": "matches",
     "suggested_escalation": null

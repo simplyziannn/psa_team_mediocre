@@ -1,78 +1,38 @@
 {
   "structured_alert": {
-    "subject": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "subject": "EDI duplicate COPARN suspected for CMA booking",
     "product": "EDI",
     "error_codes": [],
     "services": [
-      "COARRI",
       "COPARN",
       "EDI"
     ],
     "keywords": [
-      "MSKU0000001",
-      "PASIR PANJANG TERMINAL 4",
-      "COARRI",
+      "CMAU1111222",
       "COPARN",
-      "CORR-0001",
-      "REF-COP-0001",
-      "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-",
-      "ack missing",
-      "missing ack",
-      "no ack",
-      "ALR-861770",
-      "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "duplicate",
+      "COPARNs"
     ],
     "case_ids": [
-      "REF-COP-0001",
-      "CORR-0001",
-      "ALR-861770",
-      "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "COPARNs"
     ],
-    "summary": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "summary": "EDI duplicate COPARN suspected for CMA booking",
     "source_alert": {
-      "problem_statement": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+      "problem_statement": "EDI duplicate COPARN suspected for CMA booking",
       "incident_type": "EDI",
       "variables": {
         "cntr_no": [
-          "MSKU0000001"
+          "CMAU1111222"
         ],
-        "message_ref": [
-          "REF-COP-0001"
-        ],
-        "error_codes": [],
-        "vessel_name": [
-          "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-"
-        ],
-        "voyages": [],
-        "terminals": [
-          "PASIR PANJANG TERMINAL 4"
-        ],
-        "correlation_id": [
-          "CORR-0001"
-        ],
-        "is_duplicate_hint": false,
-        "is_ack_missing_hint": true,
         "edi_types": [
-          "COARRI",
           "COPARN"
-        ]
+        ],
+        "is_duplicate_hint": true
       },
       "evidence": {
-        "flags": {
-          "duplicate": false,
-          "ack_missing": true,
-          "baplie": false,
-          "coarri": true,
-          "error": false,
-          "stuck": false
-        },
-        "text_sample": "EMAIL ALR-861770 | CORR-0001 — DISCHARGE NOT REFLECTED FOR MSKU0000001 ... Last EDI = COPARN REF-COP-0001 ..."
+        "text_sample": "Two COPARNs detected for the same unit within 5 minutes. Check dedup logic."
       },
-      "confidence": 0.98
+      "confidence": 0.9
     }
   },
   "matches": [
@@ -200,26 +160,28 @@
   "excel_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Case Log.xlsx",
   "kb_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
   "escalation_pdf": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Product Team Escalation Contacts.pdf",
-  "timestamp": "2025-10-18T10:15:28Z",
+  "timestamp": "2025-10-18T18:34:32+08:00",
   "kb_used": false,
   "escalation_used": false,
   "llm_analysis": {
-    "problem_statement": "Outbound COPARN message REF-COP-0001 for container MSKU0000001 (Vessel: MV LION CITY 01, Terminal: Pasir Panjang Terminal 4, Correlation: CORR-0001) was sent but no ACK (CONTRL) received — discharge not reflected (ALR-861770).",
+    "problem_statement": "EDI system detected two COPARN messages for container CMAU1111222 within 5 minutes — suspected duplicate COPARN ingestion affecting CMA booking processing.",
     "solutions": [
-      "Verify outbound COPARN REF-COP-0001 was transmitted from EDI system and note timestamp + message payload.",
-      "Search inbound ACK/CONTRL using message_ref REF-COP-0001 and correlation_id CORR-0001. Confirm no ACK exists.",
-      "If no ACK, requeue/resend COPARN once via EDI portal or approved resend job; include original REF and correlation ID.",
-      "If resend fails or ACK still missing after retry, notify Terminal (Pasir Panjang Terminal 4 integration team) and carrier ops with payload and timestamps; request manual acknowledgement or confirmation of receipt.",
-      "If problem persists >1 hour or repeated failures (>=3 retries), escalate to EDI Infra with logs, message payload, correlation ID, and case ALR-861770 for deeper message broker/partner gateway investigation."
+      "Immediate triage: identify both COPARN message IDs and timestamps from EDI ingest logs for CMAU1111222.",
+      "Run DB query on COPARN table for container=CMAU1111222 to retrieve both records, payload hashes, and statuses.",
+      "Compare payloads and headers (message-id, sender-id, sequence) to determine if messages are identical or divergent.",
+      "If identical: mark second message as duplicate, update ingestion audit (duplicate=true), and reconcile downstream booking to single COPARN.",
+      "If divergent: determine authoritative COPARN (latest valid or by source trust) and apply reconciliation rules; keep authoritative, flag/hold other for manual review.",
+      "Prevent recurrence immediately by restarting/validating dedup service, checking queue retries and dedup keys (container+edi_type+time-window).",
+      "Notify affected stakeholders (CMA operations, billing, integration team) with case summary and actions taken."
     ],
     "sop": [
-      "1) Open EDI dashboard → Outbound Messages → filter by message_ref=REF-COP-0001 and correlation_id=CORR-0001. Record send time and status.",
-      "2) Check Inbound ACKs → filter by original_ref=REF-COP-0001 / correlation_id=CORR-0001. Confirm absence of a CONTRL/ACK.",
-      "3) Export COPARN payload (attach to case) and check for validation errors in EDI logs; if validation error found, fix payload and resend.",
-      "4) Use EDI portal 'Resend' action (or run approved resend job) once. Log retry count. Include original REF and CORR-0001 metadata.",
-      "5) After resend, wait 15–30 minutes. Re-check ACKs. If received, update case and monitor for reflected discharge in downstream systems.",
-      "6) If still no ACK: open vendor escalation to Pasir Panjang Terminal 4 integration team and carrier ops; include ALR-861770, MSKU0000001, REF-COP-0001, CORR-0001, timestamps, and payload.",
-      "7) If unresolved >1 hour or repeated failures (>=3 retries), escalate to EDI Infra / Platform SRE with full logs, message broker traces, and partner endpoint responses for root cause analysis."
+      "1) Triage: collect container (CMAU1111222), both COPARN message-IDs, ingestion timestamps, and EDI feed file names.",
+      "2) Query: SELECT * FROM coparn WHERE cntr_no='CMAU1111222' ORDER BY received_ts DESC; capture payload hashes and statuses.",
+      "3) Correlate: check message headers (message-id, sender, sequence) and message broker logs for duplicates or redeliveries.",
+      "4) Decide: identical payload = mark as duplicate and close; differing payload = escalate to ops to choose authoritative record.",
+      "5) Remediate: update DB flags (duplicate/authoritative), reconcile booking record, prevent double billing, and forward corrected COPARN downstream if needed.",
+      "6) Fix root cause: validate dedup logic (dedup key composition and 5-min window), adjust rules if required, and deploy with tests.",
+      "7) Closeout: create case notes, notify CMA and internal teams, schedule postmortem if recurrence or confidence <0.9, and monitor for reoccurrence for 72 hours."
     ],
     "source": "matches",
     "suggested_escalation": null

@@ -1,6 +1,6 @@
 {
   "structured_alert": {
-    "subject": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "subject": "EDI REF-COP-0001 stuck without ACK for MSKU0000001",
     "product": "EDI",
     "error_codes": [],
     "services": [
@@ -15,26 +15,25 @@
       "COPARN",
       "CORR-0001",
       "REF-COP-0001",
-      "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-",
       "ack missing",
       "missing ack",
       "no ack",
       "ALR-861770",
       "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "correlation",
+      "REF-COP-0001"
     ],
     "case_ids": [
       "REF-COP-0001",
       "CORR-0001",
       "ALR-861770",
       "CORR-0001",
-      "REF-COP-0001",
-      "REFLECTED"
+      "correlation",
+      "REF-COP-0001"
     ],
-    "summary": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "summary": "EDI REF-COP-0001 stuck without ACK for MSKU0000001",
     "source_alert": {
-      "problem_statement": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+      "problem_statement": "EDI REF-COP-0001 stuck without ACK for MSKU0000001",
       "incident_type": "EDI",
       "variables": {
         "cntr_no": [
@@ -43,36 +42,22 @@
         "message_ref": [
           "REF-COP-0001"
         ],
-        "error_codes": [],
-        "vessel_name": [
-          "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-"
+        "edi_types": [
+          "COARRI",
+          "COPARN"
         ],
-        "voyages": [],
         "terminals": [
           "PASIR PANJANG TERMINAL 4"
         ],
         "correlation_id": [
           "CORR-0001"
         ],
-        "is_duplicate_hint": false,
-        "is_ack_missing_hint": true,
-        "edi_types": [
-          "COARRI",
-          "COPARN"
-        ]
+        "is_ack_missing_hint": true
       },
       "evidence": {
-        "flags": {
-          "duplicate": false,
-          "ack_missing": true,
-          "baplie": false,
-          "coarri": true,
-          "error": false,
-          "stuck": false
-        },
-        "text_sample": "EMAIL ALR-861770 | CORR-0001 — DISCHARGE NOT REFLECTED FOR MSKU0000001 ... Last EDI = COPARN REF-COP-0001 ..."
+        "text_sample": "ALR-861770 Email: No COARRI generated; last EDI COPARN REF-COP-0001; correlation CORR-0001."
       },
-      "confidence": 0.98
+      "confidence": 0.97
     }
   },
   "matches": [
@@ -200,26 +185,27 @@
   "excel_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Case Log.xlsx",
   "kb_path": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
   "escalation_pdf": "C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Product Team Escalation Contacts.pdf",
-  "timestamp": "2025-10-18T10:04:36.143561Z",
+  "timestamp": "2025-10-18T18:33:55+08:00",
   "kb_used": false,
   "escalation_used": false,
   "llm_analysis": {
-    "problem_statement": "EDI message REF-COP-0001 (COPARN) for vessel MV LION CITY 01 / CORR-0001 at Pasir Panjang Terminal 4 is stuck without an ACK. Container MSKU0000001: API-reported discharge not reflected. Last EDI = COPARN REF-COP-0001; ACK missing.",
+    "problem_statement": "EDI COPARN message REF-COP-0001 for container MSKU0000001 at PASIR PANJANG TERMINAL 4 is stuck without producing a COARRI/ACK (correlation_id: CORR-0001). Alert ALR-861770 reports no COARRI generated.",
     "solutions": [
-      "Check EDI Gateway / Message Store for REF-COP-0001 and confirm ACK status and timestamps.",
-      "If message stayed in queue or FAILED, manually requeue/resend COPARN from EDI admin console (capture raw payload and correlation ID).",
-      "If message was sent but no ACK received, forward raw payload + correlation_id to Terminal (Pasir Panjang T4) and connectivity provider for confirmation / reprocessing.",
-      "Validate downstream processing (mapping/transform service and DB) for dropped/duplicate handling; reprocess if mapping error found.",
-      "If repeated missing ACKs, open vendor incident with EDI provider including REF-COP-0001, CORR-0001, MSKU0000001, timestamps and raw EDI, and set SLA escalation."
+      "Locate the COPARN message REF-COP-0001 and confirm processing state in the EDI message store and broker queues.",
+      "Check ACK/receipt logs for CORR-0001 and partner endpoint responses; confirm whether ACK was received or dropped.",
+      "If ACK missing, attempt an immediate resend/replay of REF-COP-0001 via the EDI resend tool or CLI.",
+      "If COARRI was not generated, trigger manual COARRI generation or run the COARRI generation job for MSKU0000001.",
+      "Verify terminal/partner endpoint (PASIR PANJANG TERMINAL 4) connectivity and configuration for COARRI/ACKs.",
+      "If automated retries fail, collect logs (message payloads, broker traces, timestamps) and escalate to EDI engineering."
     ],
     "sop": [
-      "1) Retrieve message: In EDI admin, search by message_ref=REF-COP-0001 and correlation_id=CORR-0001. Export raw EDI and logs.",
-      "2) Verify ACK: Confirm no ACK record within expected window (standard = 30–60min). Note send timestamp and gateway hop logs.",
-      "3) Check processing: Review mapping/consumer logs for COPARN; if error, capture stack trace and correct mapping or reprocess payload.",
-      "4) Resend: If message stuck or failed, perform manual resend from admin console. Tag action in message metadata (resend_by=team, reason=missing_ack).",
-      "5) Notify terminal & ops: Send payload + evidence to Pasir Panjang T4 ops and connectivity vendor with request to confirm receipt and to issue ACK or reapply processing.",
-      "6) Monitor: Watch for ACK for 60 minutes post-resend. Update case (REF-COP-0001) with timestamps, actions, and next steps.",
-      "7) Escalate: If ACK still not received or repeated occurrence, escalate to EDI vendor and Product Owner with full packet, flow logs, and host traces for remediation and permanent fix."
+      "1) Query EDI message store: find message_ref=REF-COP-0001 and correlation_id=CORR-0001; note timestamps and status.",
+      "2) Inspect outbound queue/broker for REF-COP-0001 and any ACK messages; record queue offsets or delivery errors.",
+      "3) Check COPARN processing logs and COARRI generation job logs for failures or exceptions.",
+      "4) Use EDI resend UI/CLI to replay REF-COP-0001; verify enqueue and monitor for ACK for 5 minutes.",
+      "5) If COARRI absent, run manual COARRI generation for MSKU0000001 and push to partner; monitor for ACK.",
+      "6) Confirm terminal endpoint health (connectivity, TLS certs, IP allowlist) with network/partner ops.",
+      "7) If unresolved, attach logs (message payloads, broker traces, error lines), update ALR-861770, and escalate to Level 3 EDI engineering with priority and timeline."
     ],
     "source": "matches",
     "suggested_escalation": null
