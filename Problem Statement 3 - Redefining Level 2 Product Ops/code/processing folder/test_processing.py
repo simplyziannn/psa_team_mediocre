@@ -1,4 +1,5 @@
-﻿import sys
+﻿import sys, os, json
+from datetime import datetime
 from pprint import pprint
 from excel_processing import process_alert_json, DEFAULT_EXCEL_PATH
 import excel_processing as _proc
@@ -63,33 +64,25 @@ def print_matches(matches, limit=3):
             print(f"    desc:    {snippet(desc)}")
 
 
-def run_sample(alert=SAMPLE_ALERT):
-    print("\n== Sample - EDI ACK Missing ==")
+def run_sample(alert=SAMPLE_ALERT, out_path: str | None = None):
     res = process_alert_json(alert, excel_path=DEFAULT_EXCEL_PATH, max_results=10)
-    la = res.get("llm_analysis", {})
-    src = la.get("source")
-    print(f"Problem Statement (source={src}):")
-    pprint(la.get("problem_statement"))
-    print("Likely cause:", la.get("likely_cause"))
-    print("Priority:", la.get("priority"))
-    print("Suggested escalation:", la.get("suggested_escalation"))
-    print("Related cases:", la.get("related_case_ids"))
-    print("Assumptions:", la.get("assumptions"))
-    print("SOP (first 5 steps):")
-    for step in (la.get("sop", [])[:5]):
-        print(" -", step)
-    if res.get("kb_fallback_used"):
-        print("Note: No historical case log found. Used Knowledge Base fallback.")
-    if la.get("source") == "escalation_contacts":
-        esc = la.get("escalation", {})
-        print("Escalation Contacts:")
-        for c in esc.get("contacts", []):
-            print(" -", c)
-        print("Escalation Procedure:")
-        for step in esc.get("procedure", []):
-            print(" -", step)
-    print("Top matches:")
-    print_matches(res.get("matches", []), limit=3)
+    # JSON payload to save
+    payload = {
+        "input_alert": alert,
+        "excel_path": DEFAULT_EXCEL_PATH,
+        "result": res,
+        "saved_at": datetime.utcnow().isoformat() + "Z",
+    }
+    text = json.dumps(payload, ensure_ascii=False, indent=2, default=str)
+    # Determine output file
+    if not out_path:
+        ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        out_path = os.path.join(os.path.dirname(__file__), f"result_{ts}.json")
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(text)
+    print("Saved JSON to:", out_path)
+    # Also print JSON to stdout for visibility
+    print(text)
 
 
 def run_failure_demo():
@@ -138,14 +131,21 @@ def run_escalation_demo():
 
 if __name__ == "__main__":
     try:
+        # Optional: --out <file>
+        out_file = None
+        if "--out" in sys.argv:
+            try:
+                out_file = sys.argv[sys.argv.index("--out") + 1]
+            except Exception:
+                out_file = None
         if "--fail" in sys.argv or "--demo-fail" in sys.argv:
             run_failure_demo()
         elif "--escalate" in sys.argv:
             run_escalation_demo()
         else:
-            print("== Running JSON alert sample ==")
-            run_sample()
+            run_sample(out_path=out_file)
     except SystemExit:
         raise
     except Exception as e:
         print(f"Test failed: {e}")
+

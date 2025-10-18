@@ -572,21 +572,6 @@ def process_alert_json(alert: Any, excel_path: str = DEFAULT_EXCEL_PATH, max_res
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def _max_score(matches: list) -> float:
     if not matches:
         return 0.0
