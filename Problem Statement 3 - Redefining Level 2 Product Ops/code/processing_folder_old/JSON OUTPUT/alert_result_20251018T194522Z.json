@@ -1,0 +1,64 @@
+{
+  "structured_alert": {
+    "subject": "Unknown EDI error code during COPARN submission",
+    "product": "EDI",
+    "error_codes": [
+      "ERR-UNMAPPED-422"
+    ],
+    "services": [
+      "COPARN",
+      "EDI"
+    ],
+    "keywords": [
+      "MSCU7654321",
+      "Brani",
+      "COPARN",
+      "REF-NOPE-0000",
+      "ERR-UNMAPPED-422"
+    ],
+    "case_ids": [
+      "REF-NOPE-0000",
+      "ERR-UNMAPPED-422"
+    ],
+    "summary": "Unknown EDI error code during COPARN submission",
+    "source_alert": {
+      "problem_statement": "Unknown EDI error code during COPARN submission",
+      "incident_type": "EDI",
+      "variables": {
+        "cntr_no": [
+          "MSCU7654321"
+        ],
+        "message_ref": [
+          "REF-NOPE-0000"
+        ],
+        "edi_types": [
+          "COPARN"
+        ],
+        "error_codes": [
+          "ERR-UNMAPPED-422"
+        ],
+        "terminals": [
+          "Brani"
+        ]
+      },
+      "evidence": {
+        "text_sample": "Submission to partner returns ERR-UNMAPPED-422; no hits in our knowledge base."
+      },
+      "confidence": 0.66
+    }
+  },
+  "matches": [],
+  "excel_path": "/Users/zian/Documents/PSA Hackathon/PSA_Mediocre/Problem Statement 3 - Redefining Level 2 Product Ops/Info/Case Log.xlsx",
+  "kb_path": "/Users/zian/Documents/PSA Hackathon/PSA_Mediocre/Problem Statement 3 - Redefining Level 2 Product Ops/Info/Knowledge Base.docx",
+  "escalation_pdf": "/Users/zian/Documents/PSA Hackathon/PSA_Mediocre/Problem Statement 3 - Redefining Level 2 Product Ops/Info/Product Team Escalation Contacts.pdf",
+  "timestamp": "2025-10-18T19:45:22+08:00",
+  "kb_used": false,
+  "escalation_used": false,
+  "llm_analysis": {
+    "problem_statement": "Unknown EDI error code during COPARN submission",
+    "escalation": {},
+    "solutions": [],
+    "sop": [],
+    "suggested_escalation": null
+  }
+}
