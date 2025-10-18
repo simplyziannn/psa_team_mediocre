@@ -1,109 +1,98 @@
 ﻿import sys
 from pprint import pprint
 from excel_processing import process_alert_json, DEFAULT_EXCEL_PATH
+import excel_processing as _proc
 
-SAMPLE_ALERTS = [
-    {
-        "name": "ACK missing (COARRI not generated)",
-        "alert": {
-            "problem_statement": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
-            "incident_type": "EDI",
-            "variables": {
-                "cntr_no": ["MSKU0000001"],
-                "message_ref": ["REF-COP-0001"],
-                "error_codes": [],
-                "vessel_name": ["MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-"],
-                "voyages": [],
-                "terminals": ["PASIR PANJANG TERMINAL 4"],
-                "correlation_id": ["CORR-0001"],
-                "is_duplicate_hint": False,
-                "is_ack_missing_hint": True,
-                "edi_types": ["COARRI", "COPARN"],
-            },
-            "evidence": {
-                "flags": {"duplicate": False, "ack_missing": True, "coarri": True},
-                "text_sample": (
-                    "ALR-861770 | CORR-0001 — DISCHARGE NOT REFLECTED FOR MSKU0000001. "
-                    "COPARN REF-COP-0001 present, COARRI missing."
-                ),
-            },
-            "confidence": 0.98,
-        },
+SAMPLE_ALERT = {
+    "problem_statement": "EDI REF-COP-0001 stuck without ACK. Vessel: Mv Lion City 01 Api Reported Discharge With Correlation Corr- Terminal: Pasir Panjang Terminal 4 Correlation: CORR-0001",
+    "incident_type": "EDI",
+    "variables": {
+        "cntr_no": ["MSKU0000001"],
+        "message_ref": ["REF-COP-0001"],
+        "error_codes": [],
+        "vessel_name": [
+            "MV LION CITY 01 API REPORTED DISCHARGE WITH CORRELATION CORR-"
+        ],
+        "voyages": [],
+        "terminals": ["PASIR PANJANG TERMINAL 4"],
+        "correlation_id": ["CORR-0001"],
+        "is_duplicate_hint": False,
+        "is_ack_missing_hint": True,
+        "edi_types": ["COARRI", "COPARN"],
     },
-    {
-        "name": "Possible duplicate COARRI",
-        "alert": {
-            "problem_statement": "Duplicate COARRI suspected for MSKU0000002 at Pasir Panjang Terminal 3",
-            "incident_type": "EDI",
-            "variables": {
-                "cntr_no": ["MSKU0000002"],
-                "message_ref": ["REF-COA-0021"],
-                "correlation_id": ["CORR-0002"],
-                "terminals": ["PASIR PANJANG TERMINAL 3"],
-                "edi_types": ["COARRI"],
-                "is_duplicate_hint": True,
-                "is_ack_missing_hint": False,
-            },
-            "evidence": {
-                "flags": {"duplicate": True, "coarri": True},
-                "text_sample": "ALR-861771 | Possible duplicate COARRI for MSKU0000002, CORR-0002",
-            },
-            "confidence": 0.9,
+    "evidence": {
+        "flags": {
+            "duplicate": False,
+            "ack_missing": True,
+            "baplie": False,
+            "coarri": True,
+            "error": False,
+            "stuck": False
         },
+        "text_sample": "EMAIL ALR-861770 | CORR-0001 — DISCHARGE NOT REFLECTED FOR MSKU0000001  HI OPS  FOR CONTAINER MSKU0000001 ON MV LION CITY 01  API REPORTED DISCHARGE WITH CORRELATION CORR-0001 AT 2025-10-03 17 20  BUT NO COARRI WAS GENERATED FOR THIS UNIT  THE LAST EDI ON RECORD IS COPARN REF-COP-0001  08 01   AND T"
     },
-    {
-        "name": "Non-EDI: Vessel Advice service latency",
-        "alert": {
-            "problem_statement": "Vessel Advice API latency spike affecting schedule lookups for MV PACIFIC DAWN",
-            "incident_type": "Vessel Advice",
-            "variables": {
-                "vessel_name": ["MV PACIFIC DAWN"],
-                "terminals": ["PASIR PANJANG TERMINAL 4"],
-                "error_codes": ["HTTP 504"],
-            },
-            "evidence": {
-                "flags": {"error": True},
-                "text_sample": "ALR-861780 | 504s observed on /vessel-advice/schedule for MV PACIFIC DAWN",
-            },
-            "confidence": 0.7,
-        },
-    },
-]
+    "confidence": 0.98
+}
+
+
+def get_any(d, keys, default=""):
+    for k in keys:
+        if k in d and d.get(k):
+            return str(d.get(k))
+    return default
+
+
+def snippet(text: str, n: int = 120) -> str:
+    t = str(text or "")
+    return t if len(t) <= n else t[: n - 1] + "…"
 
 
 def print_matches(matches, limit=3):
-    def get_any(d, keys, default=""):
-        for k in keys:
-            if k in d and d.get(k):
-                return str(d.get(k))
-        return default
-
     for r in matches[:limit]:
         score = r.get("_match_score")
         subj = get_any(r, ["subject", "Subject", "title", "summary"]) or "(no subject)"
         cid = get_any(r, ["case_id", "Case ID", "ticket", "Ticket ID"]) or "-"
         prod = get_any(r, ["product", "Product"]) or "-"
-        print(f"  {score} | case_id={cid} | product={prod} | {subj}")
+        date = get_any(r, ["date", "created", "opened", "Created At"]) or "-"
+        desc = get_any(r, ["description", "details", "notes", "body"]) or ""
+        sheet = r.get("_sheet") or "?"
+        print(f"  {score} | case_id={cid} | product={prod} | date={date} | sheet={sheet}")
+        if subj:
+            print(f"    subject: {snippet(subj)}")
+        if desc:
+            print(f"    desc:    {snippet(desc)}")
 
 
-def run_samples():
-    for i, item in enumerate(SAMPLE_ALERTS, start=1):
-        print("\n== Sample", i, f"- {item['name']} ==")
-        res = process_alert_json(item["alert"], excel_path=DEFAULT_EXCEL_PATH, max_results=10)
-        src = res.get("llm_analysis", {}).get("source")
-        print(f"Problem Statement (source={src}):")
-        pprint(res.get("llm_analysis", {}).get("problem_statement"))
-        print("SOP (first 5 steps):")
-        for step in (res.get("llm_analysis", {}).get("sop", [])[:5]):
+def run_sample(alert=SAMPLE_ALERT):
+    print("\n== Sample - EDI ACK Missing ==")
+    res = process_alert_json(alert, excel_path=DEFAULT_EXCEL_PATH, max_results=10)
+    la = res.get("llm_analysis", {})
+    src = la.get("source")
+    print(f"Problem Statement (source={src}):")
+    pprint(la.get("problem_statement"))
+    print("Likely cause:", la.get("likely_cause"))
+    print("Priority:", la.get("priority"))
+    print("Suggested escalation:", la.get("suggested_escalation"))
+    print("Related cases:", la.get("related_case_ids"))
+    print("Assumptions:", la.get("assumptions"))
+    print("SOP (first 5 steps):")
+    for step in (la.get("sop", [])[:5]):
+        print(" -", step)
+    if res.get("kb_fallback_used"):
+        print("Note: No historical case log found. Used Knowledge Base fallback.")
+    if la.get("source") == "escalation_contacts":
+        esc = la.get("escalation", {})
+        print("Escalation Contacts:")
+        for c in esc.get("contacts", []):
+            print(" -", c)
+        print("Escalation Procedure:")
+        for step in esc.get("procedure", []):
             print(" -", step)
-        if res.get("kb_fallback_used"):
-            print("Note: No historical case log found. Used Knowledge Base fallback.")
-        print("Top matches:")
-        print_matches(res.get("matches", []), limit=3)
+    print("Top matches:")
+    print_matches(res.get("matches", []), limit=3)
 
 
 def run_failure_demo():
-    """Intentionally fail: require at least one historical match for a nonsense alert."""
     print("\n== Failure Demo - Expecting at least 1 historical match (will fail) ==")
     nonsense_alert = {
         "problem_statement": "XQZ-DOES-NOT-EXIST random incident that should not match anything",
@@ -126,13 +115,36 @@ def run_failure_demo():
         print_matches(matches, limit=3)
 
 
+def run_escalation_demo():
+    print("\n== Escalation Demo - Product Team Escalation Contacts ==")
+    entities = {
+        "product": "EDI",
+        "services": ["COARRI"],
+        "keywords": ["ACK missing", "COARRI"],
+        "error_codes": [],
+        "case_ids": [],
+        "subject": "Demo: escalate to product team",
+        "summary": "Demo escalation when no history/KB",
+    }
+    esc = _proc._escalation_from_contacts(entities, _proc.DEFAULT_ESCALATION_PDF)
+    print("Module:", esc.get("module"))
+    print("Contacts:")
+    for c in esc.get("contacts", []):
+        print(" -", c)
+    print("Procedure:")
+    for step in esc.get("procedure", []):
+        print(" -", step)
+
+
 if __name__ == "__main__":
     try:
         if "--fail" in sys.argv or "--demo-fail" in sys.argv:
             run_failure_demo()
+        elif "--escalate" in sys.argv:
+            run_escalation_demo()
         else:
-            print("== Running JSON alert sample suite ==")
-            run_samples()
+            print("== Running JSON alert sample ==")
+            run_sample()
     except SystemExit:
         raise
     except Exception as e:

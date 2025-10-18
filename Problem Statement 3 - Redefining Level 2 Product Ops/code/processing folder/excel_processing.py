@@ -1,17 +1,17 @@
-﻿import os, re, json
+﻿import os, re, json,sys
 from datetime import datetime
 from difflib import SequenceMatcher
 from typing import Any
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from LLM_folder.call_openai_basic import ask_gpt5
 
+# dynamically add the project root (one level up from 'app/')
 
-DEFAULT_EXCEL_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "Info", "Case Log.xlsx"
-)
-DEFAULT_KB_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "Info", "Knowledge Base.docx"
-)
+
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+DEFAULT_EXCEL_PATH = os.path.join(_REPO_ROOT, "Info", "Case Log.xlsx")
+DEFAULT_KB_PATH = os.path.join(_REPO_ROOT, "Info", "Knowledge Base.docx")
+DEFAULT_ESCALATION_PDF = os.path.join(_REPO_ROOT, "Info", "Product Team Escalation Contacts.pdf")
 
 
 def _to_json(text: str):
@@ -28,36 +28,8 @@ def _to_json(text: str):
     return None
 
 
-def extract_email_entities(email_text: str) -> dict:
-    """Use LLM to extract structured fields from an email."""
-    sys = (
-        "Return ONLY compact JSON for fields: "
-        "subject, customer, product, environment, "
-        "error_codes[], services[], keywords[], case_ids[], "
-        "probable_issue, suspected_component, summary."
-    )
-    user = (
-        "Extract fields from email below. If missing, use null or empty arrays.\n" \
-        f"Email:\n{email_text}"
-    )
-    raw = ask_gpt5(user, system_prompt=sys, max_completion_tokens=2048)
-    data = _to_json(raw) or {}
-    if not data:
-        raw = ask_gpt5("ONLY JSON. " + user, system_prompt=sys, max_completion_tokens=2048)
-        data = _to_json(raw) or {}
-    for k in [
-        "subject", "customer", "product", "environment",
-        "probable_issue", "suspected_component", "summary",
-    ]:
-        data.setdefault(k, None)
-    for k in ["error_codes", "services", "keywords", "case_ids"]:
-        data.setdefault(k, [])
-    return data
-
-
 def _norm(s: str) -> str:
-    return re.sub(r"\s+", " ", (s or "").strip()).lower()
-
+    return re.sub(r"\\s+", " ", (s or "").strip()).lower()
 
 def _toks(s: str):
     s = _norm(s)
@@ -143,76 +115,32 @@ def find_matching_cases(entities: dict, excel_path: str = DEFAULT_EXCEL_PATH, ma
     return out[:max_results]
 
 
-def process_email(email_info: Any, excel_path: str = DEFAULT_EXCEL_PATH, max_results: int = 10) -> dict:
-    """High-level pipeline to parse email with LLM, match past cases, and generate Problem Statement + SOP."""
-    if isinstance(email_info, dict):
-        s = email_info.get("subject") or ""
-        b = email_info.get("body") or email_info.get("text") or ""
-        email_text = (s + "\n\n" + b).strip() or json.dumps(email_info)
-    else:
-        email_text = str(email_info)
-    ents = extract_email_entities(email_text)
-    matches = find_matching_cases(ents, excel_path=excel_path, max_results=max_results)
-    kb_used = False
-    if not matches:
-        print("No historical case log found. Running Knowledge Base docx...")
-        kb_obj = _kb_fallback(ents, matches, DEFAULT_KB_PATH)
-        if kb_obj:
-            llm_analysis = kb_obj
-            kb_used = True
-        else:
-            llm_analysis = generate_problem_and_sop(ents, matches)
-    else:
-        llm_analysis = generate_problem_and_sop(ents, matches)
-    return {
-        "structured_email": ents,
-        "matches": matches,
-        "llm_analysis": llm_analysis,
-        "excel_path": excel_path,
-        "kb_fallback_used": kb_used,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-    }
 
 def _safe_row_summary(row: dict, max_len: int = 500) -> str:
-    # Prefer common fields first
     preferred = [
-        "case_id", "Case ID", "ticket", "Ticket ID",
-        "subject", "Subject", "title", "summary",
-        "product", "Product", "service", "Service",
-        "error_code", "Error", "code",
-        "date", "created", "Created At",
-        "description", "details", "notes", "body",
+        "case_id","Case ID","ticket","Ticket ID",
+        "subject","Subject","title","summary",
+        "product","Product","service","Service",
+        "error_code","Error","code",
+        "date","created","Created At",
+        "description","details","notes","body",
     ]
-    items = []
-    used = set()
+    items=[]; used=set()
     for k in preferred:
         if k in row and k not in used and not str(k).startswith("_"):
-            v = str(row.get(k, ""))
+            v=str(row.get(k,""))
             if v:
-                items.append(f"{k}: {v}")
-                used.add(k)
-    # Fill with remaining keys if space
-    if len("; ".join(items)) < max_len:
-        for k, v in row.items():
-            if k in used or str(k).startswith("_"):
-                continue
-            sv = str(v)
-            if not sv:
-                continue
+                items.append(f"{k}: {v}"); used.add(k)
+    if len('; '.join(items))<max_len:
+        for k,v in row.items():
+            if k in used or str(k).startswith("_"): continue
+            sv=str(v)
+            if not sv: continue
             items.append(f"{k}: {sv}")
-            if len("; ".join(items)) >= max_len:
-                break
-    text = "; ".join(items)
-    return text[:max_len]
+            if len('; '.join(items))>=max_len: break
+    return '; '.join(items)[:max_len]
 
-
-def generate_problem_and_sop(structured_email: dict, matches: list) -> dict:
-    """
-    Use the LLM to synthesize a concise Problem Statement and SOP steps
-    based on the parsed email and the top matching historical cases.
-    Returns a dict with keys: problem_statement, likely_cause, priority, sop, related_case_ids, assumptions, suggested_escalation.
-    """
-    # Build compact context from matches
+def generate_problem_and_sop(structured_alert: dict, matches: list) -> dict:
     related_ids = []
     context_lines = []
     for m in matches[:5]:
@@ -242,15 +170,13 @@ def generate_problem_and_sop(structured_email: dict, matches: list) -> dict:
         "suggested_escalation": "string|null",
     }
     user = (
-        "Incoming alert (structured):\n" + json.dumps(structured_email, ensure_ascii=False) + "\n\n" +
+        "Incoming alert (structured):\n" + json.dumps(structured_alert, ensure_ascii=False) + "\n\n" +
         "Top matching past cases (compact):\n" + context + "\n\n" +
         "Produce JSON with fields: " + json.dumps(schema_hint) + ". "
         "Keep it brief but complete."
     )
-
     raw = ask_gpt5(user, system_prompt=system, max_completion_tokens=2048)
     obj = _to_json(raw) or {}
-    # Ensure keys
     obj.setdefault("problem_statement", "")
     obj.setdefault("likely_cause", None)
     obj.setdefault("priority", "Unknown")
@@ -259,26 +185,79 @@ def generate_problem_and_sop(structured_email: dict, matches: list) -> dict:
     obj.setdefault("assumptions", [])
     obj.setdefault("suggested_escalation", None)
     obj.setdefault("source", "direct")
+    return obj
 
-    # Fallback: If no meaningful output, try leveraging the Knowledge Base
-    needs_kb = (not obj.get("problem_statement")) or (not obj.get("sop"))
-    if needs_kb:
-        kb_obj = _kb_fallback(structured_email, matches, DEFAULT_KB_PATH)
-        if kb_obj:
-            # Merge keeping non-empty fields
-            for k in [
-                "problem_statement",
-                "likely_cause",
-                "priority",
-                "sop",
-                "related_case_ids",
-                "assumptions",
-                "suggested_escalation",
-            ]:
-                if not obj.get(k) and kb_obj.get(k):
-                    obj[k] = kb_obj[k]
-            obj["source"] = "kb_fallback"
-            obj["kb_path"] = DEFAULT_KB_PATH
+def _read_pdf_text(pdf_path: str) -> str:
+    try:
+        from PyPDF2 import PdfReader
+    except Exception:
+        return ""
+    if not os.path.exists(pdf_path):
+        return ""
+    try:
+        r = PdfReader(pdf_path)
+        out = []
+        for pg in r.pages:
+            try:
+                out.append(pg.extract_text() or "")
+            except Exception:
+                pass
+        return "\n\n".join(out)
+    except Exception:
+        return ""
+
+
+def _escalation_from_contacts(entities: dict, pdf_path: str) -> dict:
+    """Use the Product Team Escalation Contacts.pdf to produce module-specific escalation steps."""
+    text = _read_pdf_text(pdf_path)
+    if not text:
+        return {}
+
+    module = entities.get("product") or None
+    if not module:
+        svcs = entities.get("services") or []
+        module = (svcs[0] if svcs else None)
+    module = (module or "Unknown").strip()
+
+    terms = [module] + (entities.get("services") or [])
+    terms_l = [t.lower() for t in terms if t]
+    chunks = re.split(r"\n\s*\n+", text)
+    picks = []
+    for ch in chunks:
+        cl = ch.lower()
+        if any(t in cl for t in terms_l):
+            picks.append(ch.strip())
+        if len("\n\n".join(picks)) > 12000:
+            break
+    if not picks:
+        picks = [text[:4000]]
+
+    contacts_excerpt = "\n\n".join(picks)
+
+    system = (
+        "You are a Product Ops runbook assistant. Using the provided escalation contacts/excerpts and the module name, "
+        "produce a short, clear escalation procedure: who to contact (roles or teams), contact channels, and step-by-step actions. "
+        "Respond ONLY with minified JSON."
+    )
+    schema = {
+        "module": "string",
+        "contacts": ["string"],
+        "procedure": ["string"],
+        "notes": "string|null",
+    }
+    user = (
+        f"Module: {module}\n\nRelevant contacts excerpt:\n{contacts_excerpt}\n\n"
+        f"Return JSON fields: {json.dumps(schema)}"
+    )
+
+    raw = ask_gpt5(user, system_prompt=system, max_completion_tokens=1024)
+    obj = _to_json(raw) or {}
+    obj.setdefault("module", module)
+    obj.setdefault("contacts", [])
+    obj.setdefault("procedure", [])
+    obj.setdefault("notes", None)
+    obj["source"] = "escalation_contacts"
+    obj["pdf_path"] = pdf_path
     return obj
 
 
@@ -560,14 +539,27 @@ def process_alert_json(alert: Any, excel_path: str = DEFAULT_EXCEL_PATH, max_res
     entities = entities_from_alert(alert_obj)
     matches = find_matching_cases(entities, excel_path=excel_path, max_results=max_results)
     kb_used = False
-    if not matches:
+    force_kb = (_max_score(matches) < 2.0)
+    if (not matches) or force_kb:
         print("No historical case log found. Running Knowledge Base docx...")
         kb_obj = _kb_fallback(entities, matches, DEFAULT_KB_PATH)
         if kb_obj:
             llm_analysis = kb_obj
             kb_used = True
         else:
-            llm_analysis = generate_problem_and_sop(entities, matches)
+            print("No knowledge base guidance found. Escalating via Product Team Escalation Contacts...")
+            esc = _escalation_from_contacts(entities, DEFAULT_ESCALATION_PDF)
+            llm_analysis = {
+                "problem_statement": entities.get("subject") or entities.get("summary") or "",
+                "likely_cause": None,
+                "priority": "Unknown",
+                "sop": esc.get("procedure", []),
+                "related_case_ids": [],
+                "assumptions": [],
+                "suggested_escalation": ", ".join(esc.get("contacts", [])) or None,
+                "source": esc.get("source"),
+                "escalation": esc,
+            }
     else:
         llm_analysis = generate_problem_and_sop(entities, matches)
     return {
@@ -578,3 +570,29 @@ def process_alert_json(alert: Any, excel_path: str = DEFAULT_EXCEL_PATH, max_res
         "kb_fallback_used": kb_used,
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def _max_score(matches: list) -> float:
+    if not matches:
+        return 0.0
+    try:
+        return float(matches[0].get("_match_score", 0.0))
+    except Exception:
+        return 0.0
+
+
