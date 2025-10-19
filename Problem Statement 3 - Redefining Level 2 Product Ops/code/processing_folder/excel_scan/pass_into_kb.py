@@ -161,7 +161,7 @@ def main():
 
     # 🧠 Step 2: Run the pipeline and get the result
     result_tuple = process_email_to_tuple(raw_email, debug=False)
-    print(tuple(type(x).__name__ for x in result_tuple))
+    #print(tuple(type(x).__name__ for x in result_tuple))
 
     return result_tuple
     # 🎯 Step 3: Display the results
