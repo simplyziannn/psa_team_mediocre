@@ -1,40 +1,66 @@
-import json
-from typing import Any, Dict
-import os, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from email_processor.email_processor import process_any
-from excel_scanner import check_excel_for_string
+from typing import Any, Dict, Tuple
+import re, json
 
-def extract_text_sample(result: Dict[str, Any]) -> str:
+_CNTR_RE = re.compile(r"\b([A-Z]{4}\d{7})\b", re.I)  # e.g., CMAU00000020
+
+def extract_text_sample(payload: Any) -> Tuple[str, str]:
     """
-    Extracts the 'text_sample' from the JSON result produced by email_processor.
+    Extracts the best search query (and its source) from a structured or string payload.
 
-    Args:
-        result (dict): The JSON object returned by email_processor.
-
+    Handles both dicts and JSON strings safely.
+    Preference order:
+      1) First container id from variables.container_ids
+      2) Any container id found in evidence.text_sample
+      3) evidence.text_sample (trimmed)
+      4) problem_statement
+      5) Fallback: stringified payload
     Returns:
-        str: The extracted text sample, or an empty string if not found.
+        (query, source)
     """
     try:
-        return result.get("evidence", {}).get("text_sample", "")
-    except Exception:
-        return ""
+        # --- 1️⃣ Normalize to dict ---
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                # not valid JSON → treat as plain text
+                return payload.strip(), "raw_string"
 
+        if hasattr(payload, "to_dict"):
+            payload = payload.to_dict()
 
-if __name__ == "__main__":
-    # directly call email_processor to process email
-    result = process_any("Email ALR-861600 | CMAU00000020 - Duplicate Container information received. Hi Jen, Please assist in checking container CMAU00000020. Customer on PORTNET is seeing 2 identical containers information.")
+        if not isinstance(payload, dict):
+            return str(payload).strip(), "stringified_payload"
 
-    # Convert to dict if result is a dataclass
-    if hasattr(result, "to_dict"):
-        result = result.to_dict()
+        # --- 2️⃣ variables.container_ids ---
+        vars_ = payload.get("variables") or {}
+        container_ids = vars_.get("container_ids") or []
+        if isinstance(container_ids, list):
+            for cid in container_ids:
+                s = (cid or "").strip()
+                if s:
+                    return s.upper(), "variables.container_ids[0]"
 
-    # Extract and print text sample
-    text_sample = extract_text_sample(result)
-    print("📝 Text Sample:")
-    print(text_sample)
+        # --- 3️⃣ container id inside evidence.text_sample ---
+        ev = payload.get("evidence") or {}
+        ts = (ev.get("text_sample") or "").strip()
+        if ts:
+            m = _CNTR_RE.search(ts)
+            if m:
+                return m.group(1).upper(), "evidence.text_sample (container_id)"
 
-    # passing text sample into excel_scanner.py (check_excel_for_string())
-    check_excel_for_string(text_sample)
+        # --- 4️⃣ evidence.text_sample (full text) ---
+        if ts:
+            return ts, "evidence.text_sample"
 
+        # --- 5️⃣ problem_statement ---
+        ps = (payload.get("problem_statement") or "").strip()
+        if ps:
+            return ps, "problem_statement"
 
+        # --- 6️⃣ nothing ---
+        return "", "none"
+
+    except Exception as e:
+        print(f"⚠️ extract_text_sample error: {e}")
+        return "", "error"

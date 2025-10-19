@@ -1,42 +1,46 @@
-import os, sys, io, re
+# pass_into_kb.py
+# Pipeline helper: raw email text -> (F, G, H, matched) from Case Log.xlsx
+# Usage (in code):
+#   from processing_folder.excel_scan.pass_into_kb import process_email_to_tuple
+#   f, g, h, matched = process_email_to_tuple("Email ALR-861600 | CMAU00000020 - Duplicate ...")
+
+import io, sys, re, json
 from typing import Any, Dict, Optional, Tuple
 from contextlib import redirect_stdout
+from pathlib import Path
 from openpyxl import load_workbook
 
-# ---- Ensure we can import from project root ----
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
+# ---- Ensure we can import from project root (…/code) ----
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # .../code
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
 
-# ---- Imports from your project ----
+# ---- Project imports ----
 from email_processor.email_processor import process_any
 from processing_folder.excel_scan.excel_scanner import check_excel_for_string
-from processing_folder.excel_scan.extract_text_sample import extract_text_sample
+from processing_folder.excel_scan.extract_text_sample import extract_text_sample  # returns (query, source)
 
 
 # --------------------------------------------------------------------
-# Function: get_highest_confidence_from_printed
+# Helper: parse top match from the scanner's printed output
 # --------------------------------------------------------------------
-def get_highest_confidence_from_printed(printed_output: str, debug: bool = True) -> Optional[Dict[str, Any]]:
+def get_highest_confidence_from_printed(printed_output: str, debug: bool = False) -> Optional[Dict[str, Any]]:
     """
     Extracts the highest-confidence match from the printed scanner output.
 
-    Logic:
-      - Find the first occurrence of '[Sheet1 r### c###]' after '✅ Found matches:'
-      - Extract row and col values.
-      - Since the scanner output is already sorted by confidence, this is the top match.
-    Returns:
-      {"sheet": str, "row": int, "col": int, "score": float} or None.
+    Looks for the first occurrence like: "[SheetName r323 c7]" after "✅ Found matches:".
+    Returns: {"sheet": str, "row": int, "col": int, "score": float} or None.
     """
-    if "✅ Found matches:" not in printed_output:
+    marker = "✅ Found matches:"
+    if marker not in printed_output:
         if debug:
             print("❌ No 'Found matches' section in output.")
         return None
 
-    after_marker = printed_output.split("✅ Found matches:")[-1].strip()
+    after_marker = printed_output.split(marker, 1)[-1].strip()
 
-    _SCORE_RE = re.compile(r"(?P<score>\d+\.\d+)")
-    _LOCATOR_RE = re.compile(r"\[(?P<sheet>[A-Za-z0-9_ ]+)\s*r(?P<row>\d+)\s*c(?P<col>\d+)\]")
+    _SCORE_RE = re.compile(r"(?P<score>-?\d+(?:\.\d+)?)")
+    _LOCATOR_RE = re.compile(r"\[(?P<sheet>[^\]]+?)\s+r(?P<row>\d+)\s+c(?P<col>\d+)\]")
 
     mloc = _LOCATOR_RE.search(after_marker)
     mscore = _SCORE_RE.search(after_marker)
@@ -52,41 +56,39 @@ def get_highest_confidence_from_printed(printed_output: str, debug: bool = True)
     score = float(mscore.group("score")) if mscore else None
 
     result = {"sheet": sheet, "row": row, "col": col, "score": score}
-
     if debug:
         print(f"🏆 Top match -> Sheet: {sheet}, Row: {row}, Col: {col}, Score: {score}")
-
     return result
 
-def read_fixed_columns_from_excel(xlsx_path: str, sheet: str, row: int, debug: bool = True) -> Tuple[Any, Any, Any, bool]:
-    """
-    Reads values from the specified Excel sheet and row, shifted by one column:
-      now reads columns 6, 7, and 8 (F, G, H).
-    Returns:
-        (col6, col7, col8, match_status)
-        where match_status = True if any non-empty cell exists, otherwise False.
-    """
 
+# --------------------------------------------------------------------
+# Helper: read F/G/H from a given sheet+row
+# --------------------------------------------------------------------
+def read_fixed_columns_from_excel(xlsx_path: str, sheet: str, row: int, debug: bool = False) -> Tuple[Any, Any, Any, bool]:
+    """
+    Reads columns F(6), G(7), H(8) for a given (sheet, row).
+    Assumes the 'row' is 0-based from the scanner; converts to 1-based for Excel.
+    Returns: (col6, col7, col8, match_status)
+    """
     wb = load_workbook(xlsx_path, data_only=True)
     if sheet not in wb.sheetnames:
+        ws = wb.active
         if debug:
             print(f"⚠️ Sheet '{sheet}' not found, using first sheet instead.")
-        ws = wb.active
     else:
         ws = wb[sheet]
 
     excel_row = row + 1 if row >= 0 else row
 
-    # Shifted columns → F (6), G (7), H (8)
     values = []
-    for col in [6, 7, 8]:
+    for col in (6, 7, 8):  # F/G/H
         cell_value = ws.cell(row=excel_row, column=col).value
         values.append(cell_value if (cell_value is not None and str(cell_value).strip() != "") else 0)
 
     match_status = any(v != 0 for v in values)
 
     if debug:
-        coords = [ws.cell(row=excel_row, column=col).coordinate for col in [6, 7, 8]]
+        coords = [ws.cell(row=excel_row, column=col).coordinate for col in (6, 7, 8)]
         print(f"📘 Reading from: {xlsx_path}")
         print(f"📄 Sheet: {ws.title}, Row: {excel_row}, Columns: F/G/H")
         print(f"🧭 Cells: {coords}")
@@ -95,35 +97,82 @@ def read_fixed_columns_from_excel(xlsx_path: str, sheet: str, row: int, debug: b
 
     return (*values, match_status)
 
+
 # --------------------------------------------------------------------
-# MAIN SCRIPT
+# Public API: raw_email -> (F, G, H, matched)
 # --------------------------------------------------------------------
-if __name__ == "__main__":
-    # 1) Process the email and get text to search
-    result = process_any(
-        "Email ALR-861600 | CMAU00000020 - Duplicate Container information received. "
-        "Hi Jen, Please assist in checking container CMAU00000020. Customer on PORTNET is seeing 2 identical containers information."
-    )
+def process_email_to_tuple(
+    raw_email: str,
+    excel_path: Optional[str] = None,
+    debug: bool = False,
+) -> Tuple[Any, Any, Any, bool]:
+    """
+    Pipeline:
+      raw_email -> process_any(...) -> extract_text_sample(...) -> check_excel_for_string(query)
+      -> parse top match -> read F/G/H on that row -> return tuple
+
+    Returns:
+      (F_value, G_value, H_value, matched: bool)
+      or (0, 0, 0, False) if no usable query or no match.
+    """
+    if not raw_email or not raw_email.strip():
+        return (0, 0, 0, False)
+
+    # 1) Email -> structured result
+    result = process_any(raw_email)
     if hasattr(result, "to_dict"):
         result = result.to_dict()
-    text_sample = extract_text_sample(result)
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except json.JSONDecodeError:
+            # keep as string; extractor will handle raw strings, but likely not useful for Excel
+            pass
 
-    # 2) Run the Excel scanner and capture its printed output
+    # 2) Best query to search
+    query, _ = extract_text_sample(result)
+    if not query:
+        return (0, 0, 0, False)
+
+    # 3) Run Excel scanner and capture printed output
     buf = io.StringIO()
     with redirect_stdout(buf):
-        check_excel_for_string(text_sample)
+        check_excel_for_string(query)
     printed_output = buf.getvalue()
 
-    # 3) Parse the top match (already highest confidence)
-    top = get_highest_confidence_from_printed(printed_output, debug=True)
+    # 4) Parse top match
+    top = get_highest_confidence_from_printed(printed_output, debug=debug)
     if not top:
-        print((0, 0, 0, False))
-        sys.exit(0)
+        return (0, 0, 0, False)
 
-    # 4) Read F/G/H on that row (shifted columns 6,7,8)
-    excel_path = "/Users/zian/Documents/PSA Hackathon/PSA_Mediocre/Problem Statement 3 - Redefining Level 2 Product Ops/code/processing_folder/excel_scan/Case Log.xlsx"
-    col6, col7, col8, matched = read_fixed_columns_from_excel(
-        excel_path, sheet=top["sheet"], row=top["row"], debug=True
+    # 5) Excel path (default to repo file)
+    if excel_path is None:
+        excel_path = str(PROJECT_ROOT / "processing_folder" / "excel_scan" / "Case Log.xlsx")
+
+    # 6) Read F/G/H on that row
+    return read_fixed_columns_from_excel(
+        excel_path, sheet=top["sheet"], row=top["row"], debug=debug
     )
 
-    print("\n🎯 Final result:", (col6, col7, col8, matched))
+
+# main.py — run the Excel-Knowledge-Base pipeline directly in code
+
+from processing_folder.excel_scan.pass_into_kb import process_email_to_tuple
+
+def main():
+    # 📨 Step 1: Provide the raw email content
+    raw_email = (
+        "Email ALR-861600 | CMAU00000020 - Duplicate Container information received. "
+        "Hi Jen, Please assist in checking container CMAU00000020. "
+        "Customer on PORTNET is seeing 2 identical containers information."
+    )
+
+    # 🧠 Step 2: Run the pipeline and get the result
+    result_tuple = process_email_to_tuple(raw_email, debug=False)
+
+    # 🎯 Step 3: Display the results
+    #print("\n🎯 Final Output Tuple:")
+    print(result_tuple)
+
+if __name__ == "__main__":
+    main()
