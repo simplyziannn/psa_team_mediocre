@@ -6,13 +6,13 @@ from docx.text.paragraph import Paragraph
 from docx.table import Table
 
 # your helpers
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))) #processing folder 
 from excel_scan.embedding_helper import get_embedding, get_cosine_similarity
 
 
 # ---------------------------- Config ---------------------------------
 
-DEFAULT_THRESHOLD = 0.35
+DEFAULT_THRESHOLD = 0.5
 DEFAULT_TOP_K     = 10
 MAX_CHARS_PER_CHUNK = 500
 EMB_CACHE_DIR = Path(__file__).parent / ".emb_cache"
@@ -128,7 +128,7 @@ def semantic_docx_search(
     include_tables: bool = True,
     chunk: bool = True,
     max_chars: int = MAX_CHARS_PER_CHUNK,
-    return_always_topk: bool = True,
+    return_always_topk: bool = False,
     keyword_fallback: bool = True,
 ) -> List[Tuple[str, str, float]]:
     if not os.path.exists(docx_path):
@@ -493,15 +493,22 @@ def _infer_preferred_families_from_query(q: str) -> List[str]:
             out.append(p); seen.add(p)
     return out
 
-def pick_best_hit_with_owner(
+def pick_best_hits_with_owner(
     results: List[Tuple[str, str, float]],
     docx_path: str,
-    preferred_families: Optional[List[str]] = None
-) -> Optional[Tuple[str, str, float, Dict[str, Any]]]:
+    preferred_families: Optional[List[str]] = None,
+    top_n: int = 3,
+    wanted_sections: Optional[List[str]] = None,
+    list_only_for: Optional[Dict[str, bool]] = None,
+    include_tables_as_lines: bool = True,
+) -> List[Tuple[str, str, float, Dict[str, Any]]]:
+    """
+    Return the best `top_n` hits, sorted by (family preference, score),
+    and attach an owner bundle (including sections) for each.
+    """
     if not results:
-        return None
+        return []
 
-    # derive each hit's owner prefix quickly via paragraph text
     doc = Document(docx_path)
     blocks: List[Tuple[str, Any]] = list(iter_block_items(doc))
     block_index = build_doc_index(doc)
@@ -511,8 +518,6 @@ def pick_best_hit_with_owner(
         if not root or root not in block_index:
             return None
         bidx = block_index[root]
-
-        # Walk upwards a bit to find the nearest owner title or styled heading with owner prefix.
         scan_limit = 200
         for i in range(bidx, max(-1, bidx - scan_limit), -1):
             kind, obj = blocks[i]
@@ -525,10 +530,7 @@ def pick_best_hit_with_owner(
                 if up in {"VSL", "VSSL", "VESSEL"}:
                     return "VSL"
                 return up
-            # If a styled heading appears without prefix, keep going further up;
-            # the actual owner may be above this subheading.
         return None
-
 
     enriched = []
     for sid, text, score in results:
@@ -541,15 +543,37 @@ def pick_best_hit_with_owner(
     else:
         enriched.sort(key=lambda x: -x[2])
 
-    # compute full owner bundle for chosen
-    sid, text, score, fam = enriched[0]
-    owner_bundle = extract_owner_with_sections(docx_path, sid)
-    return (sid, text, score, {
-        "owner_title": owner_bundle["owner_title"],
-        "owner_family": owner_bundle["owner_family"],
-        "owner_prefix": owner_bundle["owner_prefix"],
-        "bounds": owner_bundle["bounds"]
-    })
+    top = enriched[:max(0, top_n)]
+    out: List[Tuple[str, str, float, Dict[str, Any]]] = []
+
+    # defaults if not provided
+    wanted_sections = wanted_sections or SUBSECTION_TITLES
+    list_only_for = list_only_for or {"Overview": False, "Resolution": False, "Verification": True}
+
+    for sid, text, score, _fam in top:
+        ob = extract_owner_with_sections(
+            docx_path=docx_path,
+            hit_source_id=sid,
+            wanted_sections=wanted_sections,
+            list_only_for=list_only_for,
+            include_tables_as_lines=include_tables_as_lines
+        )
+        out.append((
+            sid,
+            text,
+            score,
+            {
+                "owner_title": ob["owner_title"],
+                "owner_family": ob["owner_family"],
+                "owner_prefix": ob["owner_prefix"],
+                "bounds": ob["bounds"],
+                "module": ob.get("module"),
+                "sections": ob.get("sections", []),  # <-- include sections here
+            },
+        ))
+    return out
+
+
 
 
 # ------------------------ JSON assembly -------------------------------
@@ -558,7 +582,7 @@ def results_to_json(
     query: str,
     docx_path: str,
     results: List[Tuple[str, str, float]],
-    chosen_enriched: Optional[Tuple[str, str, float, Dict[str, Any]]] = None,
+    chosen_enriched_list: Optional[List[Tuple[str, str, float, Dict[str, Any]]]] = None,
     owner_bundle: Optional[Dict[str, Any]] = None,
 ) -> str:
     payload = {
@@ -569,17 +593,22 @@ def results_to_json(
             {"source_id": sid, "text": text, "score": float(score)}
             for sid, text, score in results
         ],
-        "chosen_match": (
-            {
-                "source_id": chosen_enriched[0],
-                "snippet": (chosen_enriched[1] or "")[:250],
-                "score": float(chosen_enriched[2]),
-                "owner_detected": chosen_enriched[3],
-            } if chosen_enriched else None
+        "chosen_matches": (
+            [
+                {
+                    "source_id": sid,
+                    "snippet": (text or "")[:250],
+                    "score": float(score),
+                    "owner_detected": owner_meta,
+                }
+                for (sid, text, score, owner_meta) in (chosen_enriched_list or [])
+            ]
+            if chosen_enriched_list else []
         ),
-        "owner": owner_bundle or None
+        "owner": owner_bundle or None,
     }
     return json.dumps(payload, ensure_ascii=False, indent=2)
+
 
 
 # ------------------------ Orchestration --------------------------------
@@ -598,39 +627,83 @@ def main(
         include_tables=True,
         chunk=True,
         max_chars=500,
-        return_always_topk=True,
+        return_always_topk=False,
         keyword_fallback=True
     )
 
     if preferred_owner_families is None:
         preferred_owner_families = _infer_preferred_families_from_query(query)
 
-    chosen = pick_best_hit_with_owner(results, doc_path, preferred_families=preferred_owner_families)
+    # ---- CHANGED: get a LIST of top hits
+    chosen_list = pick_best_hits_with_owner(
+        results, doc_path,
+        preferred_families=preferred_owner_families,
+        top_n=3,
+        wanted_sections=SUBSECTION_TITLES,
+        list_only_for={"Overview": False, "Resolution": False, "Verification": True},
+        include_tables_as_lines=True,
+    )
 
+
+    # Optionally extract a full owner bundle for the top-1 (for backward compat/UI)
     owner_bundle = None
-    if chosen:
-        sid = chosen[0]
+    if chosen_list:
+        first_sid = chosen_list[0][0]  # ('sid', 'text', score, meta) → take sid (index 0)
         owner_bundle = extract_owner_with_sections(
             docx_path=doc_path,
-            hit_source_id=sid,
+            hit_source_id=first_sid,
             wanted_sections=SUBSECTION_TITLES,
             # Capture everything under Resolution; still list-only for Verification
             list_only_for={"Overview": False, "Resolution": False, "Verification": True},
             include_tables_as_lines=True
         )
 
-
+    # ---- CHANGED: pass chosen_enriched_list (correct param name)
     return results_to_json(
         query, doc_path, results,
-        chosen_enriched=chosen,
+        chosen_enriched_list=chosen_list,
         owner_bundle=owner_bundle
     )
 
+def converting_json_file(raw,llm=False):
+        print("✅ LLM responded")
+        import Knowledge_Base as kb
+        # 4️⃣ Coerce & extract JSON
+        text_out = kb._coerce_llm_text(raw)
+        try:
+            json_str = kb._extract_json_block(text_out)
+        except ValueError:
+            json_str = text_out.strip()
+
+        # 5️⃣ Parse JSON safely
+        try:
+            parsed = json.loads(json_str)
+        except json.JSONDecodeError:
+            fixed = kb._escape_ctrl_chars_in_strings(json_str)
+            parsed = json.loads(fixed)
+
+        # 6️⃣ Convert SOP → list
+        parsed = kb._convert_sop_to_list(parsed,llm)
+
+        # 7️⃣ Save and return path
+        return debug_json_file_output(parsed, "debugging_alert_result.json")
+
+def debug_json_file_output(data: dict, filename: str = "alert_result.json") -> str:
+    """Save JSON data (with SOP_lines) into JSON OUTPUT folder."""
+    out_dir = Path(__file__).parent / "JSON OUTPUT"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / filename
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print(f"✅ JSON saved (pretty) to: {out_path.resolve()}")
+    print("\n🧾 Preview:\n" + json.dumps(data, indent=2, ensure_ascii=False))
+    return str(out_path.resolve())
 
 # -------------------------- CLI --------------------------------------
 
 if __name__ == "__main__":
-    query = "EDI"
+    query = "pek lao zai"
     DOCX_PATH = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         "Info",
@@ -638,3 +711,5 @@ if __name__ == "__main__":
     )
     json_str = main(query, DOCX_PATH, preferred_owner_families=None)
     print(json_str)
+    json_path = converting_json_file(json_str)
+    print(json_path)
