@@ -151,13 +151,9 @@ def process_email_to_tuple(
     )
 
 
-def main():
+def main(raw_email):
     # 📨 Step 1: Provide the raw email content
-    raw_email = (
-        "Email ALR-861600 | CMAU00000020 - Duplicate Container information received. "
-        "Hi Jen, Please assist in checking container CMAU00000020. "
-        "Customer on PORTNET is seeing 2 identical containers information."
-    )
+
 
     # 🧠 Step 2: Run the pipeline and get the result
     result_tuple = process_email_to_tuple(raw_email, debug=False)
@@ -169,4 +165,9 @@ def main():
     print(result_tuple)
 
 if __name__ == "__main__":
-    main()
+    raw_email = (
+    "Email ALR-861600 | CMAU00000020 - Duplicate Container information received. "
+    "Hi Jen, Please assist in checking container CMAU00000020. "
+    "Customer on PORTNET is seeing 2 identical containers information."
+    )
+    main(raw_email)

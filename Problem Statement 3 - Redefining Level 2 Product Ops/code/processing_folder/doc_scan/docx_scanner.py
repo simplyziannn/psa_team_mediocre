@@ -690,7 +690,7 @@ def converting_json_file(raw,llm=False):
 
 def debug_json_file_output(data: dict, filename: str = "alert_result.json") -> str:
     """Save JSON data (with SOP_lines) into JSON OUTPUT folder."""
-    out_dir = Path(__file__).parent / "JSON OUTPUT"
+    out_dir = Path(__file__).parent / "DOCX DEBUG JSON OUTPUT"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / filename
     with open(out_path, "w", encoding="utf-8") as f:

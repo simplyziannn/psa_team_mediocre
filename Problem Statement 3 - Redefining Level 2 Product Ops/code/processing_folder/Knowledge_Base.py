@@ -255,6 +255,7 @@ def SOP_match(CNTR,text):
 def main(test_tuple):
     saved_path = docx_read_and_save(test_tuple)
     print(f"\n🎉 Done. JSON saved at:\n{saved_path}")
+    return saved_path
 
 
 if __name__ == "__main__":

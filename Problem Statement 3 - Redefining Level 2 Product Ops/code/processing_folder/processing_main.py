@@ -12,12 +12,12 @@ def read_matching_count():
 
     print("Count:", count_value)
     
-def main():
-    tuple_result = excel_process.main()
+def main(raw='test'): #raw text parameter 
+    tuple_result = excel_process.main(raw)#txt input parameter
     json_path = Knowledge_Base.main(tuple_result)
     print(resolve_alert_contacts())
     #pdf(escalation)
     #output to json back to main main
-    return None
+    return json_path , resolve_alert_contacts()
 if __name__ == "__main__":
     main()
