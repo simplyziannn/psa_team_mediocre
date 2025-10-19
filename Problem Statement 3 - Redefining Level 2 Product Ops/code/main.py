@@ -1,8 +1,8 @@
 from email_processor.email_processor import process_any
 from processing_folder import processing_main
 from db_core_test import run_connector
-
 from compiler.result_pdf_compiler import compile_results
+from LLM_folder.llm_decision_maker import decide_solution
 import json
 
 def main():
@@ -29,14 +29,17 @@ def main():
 
 
     # optional: print short preview
-    print("\n🧩 Compiled summary:")
-    print(json.dumps(compiled, indent=2), "...\n")
-
-
-
+    #print("\n🧩 Compiled summary:")
+    #print(json.dumps(compiled, indent=2), "...\n")
 
     #llm 
-    
+    decision = decide_solution(compiled_path, raw_email=raw_email)
+
+    print("\n🧠 LLM Decision:\n", json.dumps(decision, indent=2))
+
+
+
+
     #output 
     
     return None
