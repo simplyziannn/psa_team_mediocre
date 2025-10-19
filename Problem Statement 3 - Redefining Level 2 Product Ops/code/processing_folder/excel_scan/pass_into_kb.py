@@ -1,15 +1,8 @@
-# pass_into_kb.py
-# Pipeline helper: raw email text -> (F, G, H, matched) from Case Log.xlsx
-# Usage (in code):
-#   from processing_folder.excel_scan.pass_into_kb import process_email_to_tuple
-#   f, g, h, matched = process_email_to_tuple("Email ALR-861600 | CMAU00000020 - Duplicate ...")
-
 import io, sys, re, json
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 from contextlib import redirect_stdout
 from pathlib import Path
 from openpyxl import load_workbook
-from processing_folder.excel_scan.pass_into_kb import process_email_to_tuple
 
 # ---- Ensure we can import from project root (…/code) ----
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # .../code
@@ -21,6 +14,7 @@ from email_processor.email_processor import process_any
 from processing_folder.excel_scan.excel_scanner import check_excel_for_string
 from processing_folder.excel_scan.extract_text_sample import extract_text_sample  # returns (query, source)
 
+Field = Union[str, int]
 
 # --------------------------------------------------------------------
 # Helper: parse top match from the scanner's printed output
@@ -65,7 +59,7 @@ def get_highest_confidence_from_printed(printed_output: str, debug: bool = False
 # --------------------------------------------------------------------
 # Helper: read F/G/H from a given sheet+row
 # --------------------------------------------------------------------
-def read_fixed_columns_from_excel(xlsx_path: str, sheet: str, row: int, debug: bool = False) -> Tuple[Any, Any, Any, bool]:
+def read_fixed_columns_from_excel(xlsx_path: str, sheet: str, row: int, debug: bool = False) -> Tuple[Field, Field, Field, bool]:
     """
     Reads columns F(6), G(7), H(8) for a given (sheet, row).
     Assumes the 'row' is 0-based from the scanner; converts to 1-based for Excel.
@@ -106,7 +100,8 @@ def process_email_to_tuple(
     raw_email: str,
     excel_path: Optional[str] = None,
     debug: bool = False,
-) -> Tuple[Any, Any, Any, bool]:
+) -> Tuple[Field, Field, Field, bool]:
+
     """
     Pipeline:
       raw_email -> process_any(...) -> extract_text_sample(...) -> check_excel_for_string(query)
@@ -156,9 +151,6 @@ def process_email_to_tuple(
     )
 
 
-
-
-
 def main():
     # 📨 Step 1: Provide the raw email content
     raw_email = (
@@ -169,6 +161,8 @@ def main():
 
     # 🧠 Step 2: Run the pipeline and get the result
     result_tuple = process_email_to_tuple(raw_email, debug=False)
+    print(tuple(type(x).__name__ for x in result_tuple))
+
     return result_tuple
     # 🎯 Step 3: Display the results
     #print("\n🎯 Final Output Tuple:")
