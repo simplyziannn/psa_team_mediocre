@@ -9,6 +9,8 @@ Given an **email or alert (test case)**, the system automatically scans **Excel 
 
 ## **System Flow**
 
+![System Flow](flowchart.jpeg)
+
 ### **1. Input**
 A test case or email is provided as raw input.  
 The **LLM** processes and structures the information into a standardized problem format.
