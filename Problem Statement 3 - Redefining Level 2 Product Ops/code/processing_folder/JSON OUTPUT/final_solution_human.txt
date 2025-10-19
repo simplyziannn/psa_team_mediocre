@@ -1,34 +1,25 @@
 INCIDENT SUMMARY
 ================================================================================
-Module: Container (CNTR)
+Module: Vessel (VS)
 
 Summary:
-Customer on PORTNET reports duplicate container REF-COP-0001: two identical container records are visible. Reporter requests assistance to check container REF-COP-0001 and confirm which record is authoritative and whether records should be merged or removed.
+Customer cannot create vessel advice for MV Lion City 07; the create operation failed with error VESSEL_ERR_4. The report states the local vessel name has already been used by another vessel advice entry, preventing creation. Customer requested assistance to resolve the name conflict and complete vessel advice creation.
 
 Root Cause:
-unknown
+Duplicate local vessel name conflict preventing creation (validation error VESSEL_ERR_4)
 
 Resolution Steps:
- - 1. Investigate Callback Delivery Failure:
- - 1.1 Applied Manual Override & Audit Trail to address callback issues.
- - 1.2 Tuned retry backoff, scaled read replicas, and enabled request coalescing to mitigate 504 errors.
- - 2. Tuned retry backoff and timeouts; scaled read replicas; enabled request coalescing.
- - 3. Rotated OAuth keys and hard-synced NTP; added idempotency on callbacks.
- - 3.1 Refresh/rotate token; confirm scopes.
- - 3.2 Verify NTP/clock skew; resync if >2 seconds.
- - 4. Reproduce the failing call on a safe test entity.
- - 4.1 Use read-only token; capture status code and latency.
- - 4.2 Record request ID/correlation ID for log search.
- - 5. Check API gateway/service health around the incident window.
- - 6. Review auth and permissions for the calling user/client.
- - 6.1 Refresh/rotate token; confirm scopes.
- - 6.2 Verify NTP/clock skew; resync if >2 seconds.
+ - Search the system for existing vessel advice records using the local vessel name 'MV Lion City 07'.
+ - If duplicate vessel advice records are found, confirm their status and either archive/rename or remove the obsolete/incorrect record to free the local vessel name.
+ - Retry the vessel advice create action for MV Lion City 07 and capture the exact error code, timestamp, and any request/correlation identifiers.
+ - If creation succeeds after removing/renaming the duplicate, confirm the customer can proceed and document the change.
+ - If the error persists, collect request/response logs and include the captured request/correlation IDs when escalating to Vessel (VS) support.
 
-Escalation Target: Container (CNTR)
+Escalation Target: Vessel (VS)
 Contacts:
- - Mark Lee – Product Ops Manager <mark.lee@psa123.com>
+ - Jaden Smith – Vessel Operations <jaden.smith@psa123.com>
 Escalation Steps:
- - 1. Notify Product Duty immediately.
- - 2. If unresolved, escalate to Manager on-call.
- - 3. Engage SRE/Infra team if needed.
+ - 1. Notify Vessel Duty team.
+ - 2. If no response, escalate to Senior Ops Manager.
+ - 3. Engage Vessel Static team for further diagnostics.
 ================================================================================

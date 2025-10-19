@@ -109,8 +109,8 @@ def _save_json_pretty(data: dict, filename: str = "alert_result.json") -> str:
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
-    print(f"✅ JSON saved (pretty) to: {out_path.resolve()}")
-    print("\n🧾 Preview:\n" + json.dumps(data, indent=2, ensure_ascii=False))
+    print(f" JSON saved (pretty) to: {out_path.resolve()}")
+    print("\n Preview:\n" + json.dumps(data, indent=2, ensure_ascii=False))
     return str(out_path.resolve())
 
 
@@ -123,13 +123,13 @@ def docx_read_and_save(tuple_parameter,filepath=KNOWLEDGE_BASE_DOCX) -> str:
     problem_statement,solution,SOP,excel_matched = tuple_parameter
     path = Path(filepath)
     if not path.exists():
-        raise FileNotFoundError(f"❌ File not found: {filepath}")
+        raise FileNotFoundError(f" File not found: {filepath}")
 
     # 1️⃣ Read DOCX
     doc = Document(path)
     text = "\n".join(p.text.strip() for p in doc.paragraphs if p.text and p.text.strip())
     if not text.strip():
-        raise ValueError(f"⚠️ File is empty or unreadable: {filepath}")
+        raise ValueError(f"️ File is empty or unreadable: {filepath}")
     excel_matched = False
     # 2️⃣ Build LLM prompt
     #make more conditions
@@ -175,15 +175,15 @@ def problem_match(problem,text):
         )
 
         # 3️⃣ Query LLM
-        print("📤 Sending preview to LLM...")
+        print(" Sending preview to LLM...")
         raw = ask_gpt5(prompt)
-        print("✅ LLM responded")
+        print(" LLM responded")
 
         # 4️⃣ Coerce & extract JSON
         converting_json_file(raw)
 
 def converting_json_file(raw,llm=False):
-        print("✅ LLM responded")
+        print(" LLM responded")
 
         # 4️⃣ Coerce & extract JSON
         text_out = _coerce_llm_text(raw)
@@ -227,9 +227,9 @@ def SOP_match(CNTR,text):
     )
 
     # 3️⃣ Query LLM
-    print("📤 Sending preview to LLM...")
+    print(" Sending preview to LLM...")
     raw = ask_gpt5(prompt)
-    print("✅ LLM responded")
+    print(" LLM responded")
 
     # 4️⃣ Coerce & extract JSON
     text_out = _coerce_llm_text(raw)
@@ -254,7 +254,7 @@ def SOP_match(CNTR,text):
     
 def main(test_tuple):
     saved_path = docx_read_and_save(test_tuple)
-    print(f"\n🎉 Done. JSON saved at:\n{saved_path}")
+    print(f"\n Done. JSON saved at:\n{saved_path}")
     return saved_path
 
 

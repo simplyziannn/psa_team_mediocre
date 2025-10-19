@@ -42,10 +42,10 @@ def get_embedding(text: str) -> List[float]:
             detail = r.json()
         except Exception:
             detail = {"raw": r.text}
-        print(f"❌ [HTTP {r.status_code}] {json.dumps(detail, indent=2)}")
+        print(f" [HTTP {r.status_code}] {json.dumps(detail, indent=2)}")
         return []
     except Exception as e:
-        print(f"❌ [embedding error] {e}")
+        print(f" [embedding error] {e}")
         return []
 
 def get_cosine_similarity(a: List[float], b: List[float]) -> float:

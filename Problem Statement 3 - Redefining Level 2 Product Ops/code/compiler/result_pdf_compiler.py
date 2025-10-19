@@ -46,6 +46,6 @@ def compile_results(
     if save_to_file:
         compiled_path = json_path.with_name("compiled_output.json")
         compiled_path.write_text(json.dumps(compiled, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"✅ Compiled output saved to: {compiled_path}")
+        print(f" Compiled output saved to: {compiled_path}")
 
     return compiled, compiled_path

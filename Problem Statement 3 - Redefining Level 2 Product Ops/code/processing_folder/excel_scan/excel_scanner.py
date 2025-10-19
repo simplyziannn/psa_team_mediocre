@@ -96,7 +96,7 @@ def check_in_excel_cached(
 
 def print_hits(hits):
     if not hits:
-        print("❌ No semantic matches at or above the threshold.")
+        print(" No semantic matches at or above the threshold.")
         return
     for sim, text, sheet, r, c in hits:
         print(f"{sim:.3f} | [{sheet} r{r} c{c}] {text}")
@@ -130,14 +130,14 @@ def check_excel_for_string(query: str,
     """
     cache_exists = os.path.exists(cache_path)
     if not cache_exists:
-        raise FileNotFoundError(f"❌ Cache not found: {cache_path}")
+        raise FileNotFoundError(f" Cache not found: {cache_path}")
 
     # Perform the semantic check
     present, hits = check_in_excel_cached(query, threshold=threshold, top_k=top_k, cache_path=cache_path)
     
     # Optional pretty print
-    print(f"\n🔍 Checking for: '{query}'")
-    print("✅ Found matches:\n" if present else "❌ No matches found.\n")
+    print(f"\n Checking for: '{query}'")
+    print(" Found matches:\n" if present else " No matches found.\n")
     print_hits(hits)
 
     return present, hits

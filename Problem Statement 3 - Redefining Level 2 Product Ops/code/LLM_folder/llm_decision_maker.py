@@ -153,7 +153,7 @@ def semantic_search(query: str, cache: List[Tuple[str, List[float]]], top_k: int
             score = get_cosine_similarity(query_emb, emb)
             results.append((label, score))
         except Exception as e:
-            print(f"⚠️ Skipped one cache entry: {e}")
+            print(f"️ Skipped one cache entry: {e}")
     results.sort(key=lambda x: x[1], reverse=True)
     return results[:top_k]
 
@@ -282,7 +282,7 @@ def decide_solution(
     )
 
     # 2) Load caches
-    print("🔍 Loading embedding caches ...")
+    print(" Loading embedding caches ...")
     doc_cache = load_docx_embedding_cache(DOCX_EMB_PATH)
     excel_cache = load_excel_embedding_cache(EXCEL_EMB_PATH)
 
@@ -402,7 +402,7 @@ def decide_solution(
     # 7) Save JSON
     out_path = compiled_path.with_name("final_solution.json")
     out_path.write_text(json.dumps(decision, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"✅ Final structured solution saved to: {out_path}")
+    print(f" Final structured solution saved to: {out_path}")
 
     # 8) Create human-readable summary (uses enforced escalation block)
     human_lines: List[str] = []
@@ -439,7 +439,7 @@ def decide_solution(
     # Save text version
     human_path = compiled_path.with_name("final_solution_human.txt")
     human_path.write_text(human_readable, encoding="utf-8")
-    print(f"✅ Human-readable summary saved to: {human_path}")
+    print(f" Human-readable summary saved to: {human_path}")
 
     # 9) Return both
     return {"json": decision, "text": human_readable}

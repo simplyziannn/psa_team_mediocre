@@ -62,5 +62,5 @@ def extract_text_sample(payload: Any) -> Tuple[str, str]:
         return "", "none"
 
     except Exception as e:
-        print(f"⚠️ extract_text_sample error: {e}")
+        print(f"️ extract_text_sample error: {e}")
         return "", "error"

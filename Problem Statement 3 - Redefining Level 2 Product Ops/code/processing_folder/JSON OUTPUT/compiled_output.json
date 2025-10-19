@@ -6,40 +6,40 @@
   },
   "alert_result": {
     "query": "Callback delivery failures for NYKU8964499. Webhook sender faced 401 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/edi/upload'.",
-    "docx_path": "/Users/zian/Documents/PSA Hackathon/PSA_Mediocre/Problem Statement 3 - Redefining Level 2 Product Ops/Info/Knowledge Base.docx",
+    "docx_path": "C:\\Users\\user\\Desktop\\PSA Hack\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
     "count": 5,
     "results": [
       {
         "source_id": "P#376:0",
         "text": "Callback delivery failures for CONTAINER_ID. Webhook sender faced 504 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/auth/token'.",
-        "score": 0.7816119906082928
+        "score": 0.7816119906082919
       },
       {
         "source_id": "P#354:0",
         "text": "Callback delivery failures for CONTAINER_ID. Webhook sender faced 502 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/bookings/search'.",
-        "score": 0.743037369152447
+        "score": 0.743037369152446
       },
       {
         "source_id": "P#1284:0",
         "text": "Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID. slowest 5% of requests latency > 12s triggered breaker; retries hit max; delivery backlog observed. Downstream customer timeline showed gaps; LOCATION ops unaffected but visibility degraded.",
-        "score": 0.5884121527902622
+        "score": 0.5884121527902625
       },
       {
         "source_id": "P#1282:0",
         "text": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
-        "score": 0.5726619311113786
+        "score": 0.5726619311113771
       },
       {
         "source_id": "P#858:0",
         "text": "Schedule API intermittently returns 401 for VESSEL_ID; slowest 5% of requests latency > 12s. External subscribers missed webhook pushes; fallback polling exposed gaps in berth window at LOCATION.",
-        "score": 0.5297392058113296
+        "score": 0.5297392058113275
       }
     ],
     "chosen_matches": [
       {
         "source_id": "P#1284:0",
         "snippet": "Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID. slowest 5% of requests latency > 12s triggered breaker; retries hit max; delivery backlog observed. Downstream customer timeline showed gaps; LOCATION ops unaffected but visib",
-        "score": 0.5884121527902622,
+        "score": 0.5884121527902625,
         "owner_detected": {
           "owner_title": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
           "owner_family": "EDI",
@@ -93,7 +93,7 @@
       {
         "source_id": "P#1282:0",
         "snippet": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
-        "score": 0.5726619311113786,
+        "score": 0.5726619311113771,
         "owner_detected": {
           "owner_title": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
           "owner_family": "EDI",
@@ -147,7 +147,7 @@
       {
         "source_id": "P#376:0",
         "snippet": "Callback delivery failures for CONTAINER_ID. Webhook sender faced 504 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/auth/token'.",
-        "score": 0.7816119906082928,
+        "score": 0.7816119906082919,
         "owner_detected": {
           "owner_title": "CNTR: Callback delivery failures for CONTAINER_ID",
           "owner_family": "CNTR",

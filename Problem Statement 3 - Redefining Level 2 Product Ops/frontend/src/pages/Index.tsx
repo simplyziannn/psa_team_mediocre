@@ -57,9 +57,62 @@ const Index = () => {
       const dbResult = result.db_result || {};
       const pdfOutput = result.pdf_output || [];
       const problemDraft = result.problem_draft || {};
+      const humanReadable = result.human_readable;
 
       // Build resolution text with proper formatting
       let resolutionParts: string[] = [];
+      
+      // Priority 1: Use the human-readable text file if available
+      if (humanReadable) {
+        // Parse the human-readable text to extract sections
+        const lines = humanReadable.split('\n');
+        let inResolutionSteps = false;
+        let inEscalationSteps = false;
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          
+          // Skip the header lines
+          if (trimmed === 'INCIDENT SUMMARY' || trimmed.startsWith('===')) {
+            continue;
+          }
+          
+          // Track sections
+          if (trimmed.startsWith('Resolution Steps:')) {
+            inResolutionSteps = true;
+            inEscalationSteps = false;
+          } else if (trimmed.startsWith('Escalation Steps:')) {
+            inResolutionSteps = false;
+            inEscalationSteps = true;
+          } else if (trimmed.startsWith('Escalation Target:') || trimmed.startsWith('Contacts:')) {
+            inResolutionSteps = false;
+          }
+          
+          resolutionParts.push(line);
+        }
+        
+        // If we successfully parsed content, use it
+        if (resolutionParts.length > 0) {
+          const resolutionText = resolutionParts.join('\n');
+          
+          // Extract escalation info from the human readable text
+          const escalationMatch = humanReadable.match(/Escalation Target:([\s\S]*?)(?:===|$)/);
+          const escalationText = escalationMatch ? escalationMatch[1].trim() : '';
+          
+          setAnalysis({
+            incident: description,
+            resolution: resolutionText,
+            escalationNeeded: escalationText.length > 0,
+            escalationMessage: escalationText || undefined,
+            severity: problemDraft.confidence > 0.7 ? 'high' : problemDraft.confidence > 0.4 ? 'medium' : 'low',
+            timestamp: new Date(),
+          });
+          return;
+        }
+      }
+      
+      // Fallback: Build from structured data
+      resolutionParts = [];
       
       // Show extracted incident info first
       if (problemDraft.incident_type) {

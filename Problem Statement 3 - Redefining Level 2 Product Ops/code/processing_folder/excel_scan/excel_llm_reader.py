@@ -21,7 +21,7 @@ def semantic_excel_search(query: str,
 
     query_emb = get_embedding(query)
     if not query_emb:
-        print("❌ Could not get query embedding.")
+        print(" Could not get query embedding.")
         return []
 
     matches = []
@@ -34,7 +34,7 @@ def semantic_excel_search(query: str,
                     matches.append((cell, sim))
 
     matches.sort(key=lambda x: x[1], reverse=True)
-    print(f"✅ Found {len(matches)} matches with similarity ≥ {threshold}")
+    print(f" Found {len(matches)} matches with similarity ≥ {threshold}")
     return matches
 
 

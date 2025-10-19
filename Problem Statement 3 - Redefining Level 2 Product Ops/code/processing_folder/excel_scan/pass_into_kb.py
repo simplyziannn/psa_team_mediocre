@@ -23,13 +23,13 @@ def get_highest_confidence_from_printed(printed_output: str, debug: bool = False
     """
     Extracts the highest-confidence match from the printed scanner output.
 
-    Looks for the first occurrence like: "[SheetName r323 c7]" after "✅ Found matches:".
+    Looks for the first occurrence like: "[SheetName r323 c7]" after " Found matches:".
     Returns: {"sheet": str, "row": int, "col": int, "score": float} or None.
     """
-    marker = "✅ Found matches:"
+    marker = " Found matches:"
     if marker not in printed_output:
         if debug:
-            print("❌ No 'Found matches' section in output.")
+            print(" No 'Found matches' section in output.")
         return None
 
     after_marker = printed_output.split(marker, 1)[-1].strip()
@@ -42,7 +42,7 @@ def get_highest_confidence_from_printed(printed_output: str, debug: bool = False
 
     if not mloc:
         if debug:
-            print("❌ Could not locate any [Sheet r c] pattern.")
+            print(" Could not locate any [Sheet r c] pattern.")
         return None
 
     sheet = mloc.group("sheet").strip()
@@ -52,7 +52,7 @@ def get_highest_confidence_from_printed(printed_output: str, debug: bool = False
 
     result = {"sheet": sheet, "row": row, "col": col, "score": score}
     if debug:
-        print(f"🏆 Top match -> Sheet: {sheet}, Row: {row}, Col: {col}, Score: {score}")
+        print(f" Top match -> Sheet: {sheet}, Row: {row}, Col: {col}, Score: {score}")
     return result
 
 
@@ -69,7 +69,7 @@ def read_fixed_columns_from_excel(xlsx_path: str, sheet: str, row: int, debug: b
     if sheet not in wb.sheetnames:
         ws = wb.active
         if debug:
-            print(f"⚠️ Sheet '{sheet}' not found, using first sheet instead.")
+            print(f"️ Sheet '{sheet}' not found, using first sheet instead.")
     else:
         ws = wb[sheet]
 
@@ -84,11 +84,11 @@ def read_fixed_columns_from_excel(xlsx_path: str, sheet: str, row: int, debug: b
 
     if debug:
         coords = [ws.cell(row=excel_row, column=col).coordinate for col in (6, 7, 8)]
-        print(f"📘 Reading from: {xlsx_path}")
-        print(f"📄 Sheet: {ws.title}, Row: {excel_row}, Columns: F/G/H")
-        print(f"🧭 Cells: {coords}")
-        print(f"📖 Values: {values}")
-        print(f"✅ Match found: {match_status}")
+        print(f" Reading from: {xlsx_path}")
+        print(f" Sheet: {ws.title}, Row: {excel_row}, Columns: F/G/H")
+        print(f" Cells: {coords}")
+        print(f" Values: {values}")
+        print(f" Match found: {match_status}")
 
     return (*values, match_status)
 
@@ -152,7 +152,7 @@ def process_email_to_tuple(
 
 
 def main(raw_email):
-    # 📨 Step 1: Provide the raw email content
+    #  Step 1: Provide the raw email content
 
 
     # Step 2: Run the pipeline and get the result
@@ -160,8 +160,8 @@ def main(raw_email):
     #print(tuple(type(x).__name__ for x in result_tuple))
 
     return result_tuple
-    # 🎯 Step 3: Display the results
-    #print("\n🎯 Final Output Tuple:")
+    #  Step 3: Display the results
+    #print("\n Final Output Tuple:")
     print(result_tuple)
 
 if __name__ == "__main__":

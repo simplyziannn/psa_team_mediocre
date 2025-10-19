@@ -27,11 +27,11 @@ def extract_module_from_json() -> Optional[str]:
         return module_value
 
     except FileNotFoundError:
-        print("❌ 'alert_result.json' not found in JSON OUTPUT folder.")
+        print(" 'alert_result.json' not found in JSON OUTPUT folder.")
     except json.JSONDecodeError:
-        print("❌ Invalid JSON format in 'alert_result.json'.")
+        print(" Invalid JSON format in 'alert_result.json'.")
     except Exception as e:
-        print(f"⚠️ Unexpected error: {e}")
+        print(f"️ Unexpected error: {e}")
 
     return None
 

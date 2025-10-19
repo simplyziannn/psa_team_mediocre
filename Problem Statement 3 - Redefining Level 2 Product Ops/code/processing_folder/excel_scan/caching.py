@@ -5,8 +5,8 @@ if __name__ == "__main__":
     cache = ensure_cache(
         xlsx_path=DEFAULT_XLSX,
         cache_path=DEFAULT_CACHE,
-        rows_limit=None,       # 👈 full Excel
+        rows_limit=None,       #  full Excel
         read_all_sheets=False  # True if multiple sheets
     )
 
-    print(f"✅ Cached {len(cache.items)} total cells from full Excel.")
+    print(f" Cached {len(cache.items)} total cells from full Excel.")

@@ -336,7 +336,7 @@ def process_email(subject: Optional[str], body: str) -> ProblemDraft:
 
     # LLM refinement on low confidence (if available)
     if confidence < 0.6:
-        # print("⚠️  Low confidence — refining with GPT-5-mini...")  # optional log
+        # print("️  Low confidence — refining with GPT-5-mini...")  # optional log
         statement = _llm_refine(statement, variables)
 
     evidence = {

@@ -666,7 +666,7 @@ def main(
     )
 
 def converting_json_file(raw,llm=False):
-        print("✅ LLM responded")
+        print(" LLM responded")
         import Knowledge_Base as kb
         # 4️⃣ Coerce & extract JSON
         text_out = kb._coerce_llm_text(raw)
@@ -696,8 +696,8 @@ def debug_json_file_output(data: dict, filename: str = "alert_result.json") -> s
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
-    print(f"✅ JSON saved (pretty) to: {out_path.resolve()}")
-    print("\n🧾 Preview:\n" + json.dumps(data, indent=2, ensure_ascii=False))
+    print(f" JSON saved (pretty) to: {out_path.resolve()}")
+    print("\n Preview:\n" + json.dumps(data, indent=2, ensure_ascii=False))
     return str(out_path.resolve())
 
 # -------------------------- CLI --------------------------------------
