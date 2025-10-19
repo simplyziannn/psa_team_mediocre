@@ -1,5 +1,5 @@
 # excel_scanner.py (read-only; never builds cache)
-import os, pickle, argparse
+import os, pickle, argparse, json
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 
@@ -145,36 +145,10 @@ if __name__ == "__main__":
         "Notification: SMS TCK-936729 — Detected an ANSI X12 301 data mismatch for vessel MV SILVER CURRENT/43C. The COARRI message indicates discharge finished at bay 22, b. Kindly verify urgently.",
         threshold=0.7
     )"""
-    import json
-    data = {
-    "problem_statement": "Duplicate container information reported for CMAU00000020.",
-    "incident_type": "ContainerData",
-    "variables": {
-        "container_ids": ["CMAU00000020"],
-        "edi_refs": [],
-        "error_codes": [],
-        "vessel_names": [],
-        "voyages": [],
-        "terminals": [],
-        "is_duplicate_hint": True,
-        "is_ack_missing_hint": False
-    },
-    "evidence": {
-        "flags": {
-        "duplicate": True,
-        "ack_missing": False,
-        "baplie": False,
-        "coarri": False,
-        "error": False,
-        "stuck": False
-        },
-        "text_sample": "Email ALR-861600 | CMAU00000020 - Duplicate Container information received. Hi Jen, Please assist in checking container CMAU00000020. Customer on PORTNET is seeing 2 identical containers information."
-    },
-    "confidence": 0.65
-    }
 
-    string_data = json.dumps(data)
+
+    string_data = json.dumps("EMAIL ALR-861600 | CMAU00000020 - DUPLICATE CONTAINER INFORMATION RECEIVED  HI JEN  PLEASE ASSIST IN CHECKING CONTAINER CMAU00000020  CUSTOMER ON PORTNET IS SEEING 2 IDENTICAL CONTAINERS INFORMATION ")
     print(string_data)
 
 
-    check_excel_for_string("Email ALR-861600 | CMAU00000020 - Duplicate Container information received. Hi Jen, Please assist in checking container CMAU00000020. Customer on PORTNET is seeing 2 identical containers information.", threshold=0.7)
+    check_excel_for_string(string_data, threshold=0.7)
