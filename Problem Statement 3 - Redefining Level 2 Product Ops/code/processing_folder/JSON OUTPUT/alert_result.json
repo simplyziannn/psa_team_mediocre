@@ -29,175 +29,20 @@
       "score": 0.5297392058113296
     }
   ],
-  "chosen_matches": [
-    {
-      "source_id": "P#1284:0",
-      "snippet": "Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID. slowest 5% of requests latency > 12s triggered breaker; retries hit max; delivery backlog observed. Downstream customer timeline showed gaps; LOCATION ops unaffected but visib",
-      "score": 0.5884121527902622,
-      "owner_detected": {
-        "owner_title": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
-        "owner_family": "EDI",
-        "owner_prefix": "EDI",
-        "bounds": [
-          1333,
-          1352
-        ],
-        "module": "EDI/API",
-        "sections": [
-          {
-            "title": "Overview",
-            "level": null,
-            "start_index": 1336,
-            "end_index": 1336,
-            "lines": [
-              "Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID. slowest 5% of requests latency > 12s triggered breaker; retries hit max; delivery backlog observed. Downstream customer timeline showed gaps; LOCATION ops unaffected but visibility degraded."
-            ]
-          },
-          {
-            "title": "Resolution",
-            "level": null,
-            "start_index": 1338,
-            "end_index": 1346,
-            "lines": [
-              "1. Scaled read replicas and split hot key namespaces; added half-open probes to breaker; restored normal delivery and rebuilt backlog safely.",
-              "2. Communications used masked ticket references where applicable.",
-              "3. Reproduce the failing call on a safe test entity.",
-              "3.1 Use read-only token; capture status code and latency.",
-              "3.2 Record request ID/correlation ID for log search.",
-              "4. Check API gateway/service health around the incident window.",
-              "5. Review auth and permissions for the calling user/client.",
-              "5.1 Refresh/rotate token; confirm scopes.",
-              "5.2 Verify NTP/clock skew; resync if >2 seconds."
-            ]
-          },
-          {
-            "title": "Verification",
-            "level": null,
-            "start_index": 1348,
-            "end_index": 1352,
-            "lines": [
-              "1. Re-run the endpoint; expect 2xx and correct JSON fields.",
-              "2. Observe error rate and latency for 30 minutes; under baseline.",
-              "3. Attach request/response evidence to the case."
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "source_id": "P#1282:0",
-      "snippet": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
-      "score": 0.5726619311113786,
-      "owner_detected": {
-        "owner_title": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
-        "owner_family": "EDI",
-        "owner_prefix": "EDI",
-        "bounds": [
-          1333,
-          1352
-        ],
-        "module": "EDI/API",
-        "sections": [
-          {
-            "title": "Overview",
-            "level": null,
-            "start_index": 1336,
-            "end_index": 1336,
-            "lines": [
-              "Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID. slowest 5% of requests latency > 12s triggered breaker; retries hit max; delivery backlog observed. Downstream customer timeline showed gaps; LOCATION ops unaffected but visibility degraded."
-            ]
-          },
-          {
-            "title": "Resolution",
-            "level": null,
-            "start_index": 1338,
-            "end_index": 1346,
-            "lines": [
-              "1. Scaled read replicas and split hot key namespaces; added half-open probes to breaker; restored normal delivery and rebuilt backlog safely.",
-              "2. Communications used masked ticket references where applicable.",
-              "3. Reproduce the failing call on a safe test entity.",
-              "3.1 Use read-only token; capture status code and latency.",
-              "3.2 Record request ID/correlation ID for log search.",
-              "4. Check API gateway/service health around the incident window.",
-              "5. Review auth and permissions for the calling user/client.",
-              "5.1 Refresh/rotate token; confirm scopes.",
-              "5.2 Verify NTP/clock skew; resync if >2 seconds."
-            ]
-          },
-          {
-            "title": "Verification",
-            "level": null,
-            "start_index": 1348,
-            "end_index": 1352,
-            "lines": [
-              "1. Re-run the endpoint; expect 2xx and correct JSON fields.",
-              "2. Observe error rate and latency for 30 minutes; under baseline.",
-              "3. Attach request/response evidence to the case."
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "source_id": "P#376:0",
-      "snippet": "Callback delivery failures for CONTAINER_ID. Webhook sender faced 504 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/auth/token'.",
-      "score": 0.7816119906082928,
-      "owner_detected": {
-        "owner_title": "CNTR: Callback delivery failures for CONTAINER_ID",
-        "owner_family": "CNTR",
-        "owner_prefix": "CNTR",
-        "bounds": [
-          391,
-          413
-        ],
-        "module": "Container Booking",
-        "sections": [
-          {
-            "title": "Overview",
-            "level": null,
-            "start_index": 394,
-            "end_index": 394,
-            "lines": [
-              "Callback delivery failures for CONTAINER_ID. Webhook sender faced 504 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/auth/token'."
-            ]
-          },
-          {
-            "title": "Resolution",
-            "level": null,
-            "start_index": 396,
-            "end_index": 409,
-            "lines": [
-              "1. Investigate Callback Delivery Failure:",
-              "1.1 Applied Manual Override & Audit Trail to address callback issues.",
-              "1.2 Tuned retry backoff, scaled read replicas, and enabled request coalescing to mitigate 504 errors.",
-              "2. Tuned retry backoff and timeouts; scaled read replicas; enabled request coalescing.",
-              "3. Rotated OAuth keys and hard-synced NTP; added idempotency on callbacks.",
-              "3.1 Refresh/rotate token; confirm scopes.",
-              "3.2 Verify NTP/clock skew; resync if >2 seconds.",
-              "4. Reproduce the failing call on a safe test entity.",
-              "4.1 Use read-only token; capture status code and latency.",
-              "4.2 Record request ID/correlation ID for log search.",
-              "5. Check API gateway/service health around the incident window.",
-              "6. Review auth and permissions for the calling user/client.",
-              "6.1 Refresh/rotate token; confirm scopes.",
-              "6.2 Verify NTP/clock skew; resync if >2 seconds."
-            ]
-          },
-          {
-            "title": "Verification",
-            "level": null,
-            "start_index": 411,
-            "end_index": 413,
-            "lines": [
-              "1. Re-run the endpoint; expect 2xx and correct JSON fields.",
-              "2. Observe error rate and latency for 30 minutes; under baseline.",
-              "3. Attach request/response evidence to the case."
-            ]
-          }
-        ]
-      }
+  "chosen_match": {
+    "source_id": "P#1282:0",
+    "snippet": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
+    "score": 0.5726619311113786,
+    "owner_detected": {
+      "owner_title": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
+      "owner_family": "EDI",
+      "owner_prefix": "EDI",
+      "bounds": [
+        1333,
+        1352
+      ]
     }
-  ],
+  },
   "owner": {
     "owner_title": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
     "owner_prefix": "EDI",
@@ -223,12 +68,8 @@
           "1. Scaled read replicas and split hot key namespaces; added half-open probes to breaker; restored normal delivery and rebuilt backlog safely.",
           "2. Communications used masked ticket references where applicable.",
           "3. Reproduce the failing call on a safe test entity.",
-          "3.1 Use read-only token; capture status code and latency.",
-          "3.2 Record request ID/correlation ID for log search.",
           "4. Check API gateway/service health around the incident window.",
-          "5. Review auth and permissions for the calling user/client.",
-          "5.1 Refresh/rotate token; confirm scopes.",
-          "5.2 Verify NTP/clock skew; resync if >2 seconds."
+          "5. Review auth and permissions for the calling user/client."
         ]
       },
       {
@@ -247,5 +88,6 @@
       1333,
       1352
     ]
-  }
+  },
+  "SOP": []
 }

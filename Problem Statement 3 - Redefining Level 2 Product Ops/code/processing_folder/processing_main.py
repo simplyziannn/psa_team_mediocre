@@ -1,7 +1,7 @@
 import json,os,sys
 sys.path.append(os.path.dirname(__file__))
-from excel_scan import pass_into_kb as excel_process
-import Knowledge_Base   
+import excel_scan.pass_into_kb as excel_process
+import Knowledge_Base
 def read_matching_count(): 
     with open("result.json", "r", encoding="utf-8") as f:
         data = json.load(f)

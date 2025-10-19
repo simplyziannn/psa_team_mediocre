@@ -2,16 +2,13 @@
 import os, pickle, argparse, json
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
-problem_statement_folder = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-if __name__ != "__main__":
-    from .embedding_helper import get_embedding, get_cosine_similarity
-else:
-    from embedding_helper import get_embedding, get_cosine_similarity
+from embedding_helper import get_embedding, get_cosine_similarity
+
 # ---- CONFIG ---------------------------------------------------------------
-DEFAULT_XLSX = os.path.join(problem_statement_folder,"Info","Case Log.xlsx")
-DEFAULT_CACHE = os.path.join(problem_statement_folder,"code","processing_folder","excel_scan","case_log.embcache.pkl")   # must already exist
-print(DEFAULT_CACHE)
+DEFAULT_XLSX = "/Users/zian/Documents/PSA Hackathon/PSA_Mediocre/Problem Statement 3 - Redefining Level 2 Product Ops/Info/Case Log.xlsx"
+DEFAULT_CACHE = "case_log.embcache.pkl"   # must already exist
+
 # ---- META TYPES -----------------------------------------------------------
 @dataclass
 class CacheMeta:
