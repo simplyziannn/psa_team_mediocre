@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, Tuple
 from contextlib import redirect_stdout
 from pathlib import Path
 from openpyxl import load_workbook
+from processing_folder.excel_scan.pass_into_kb import process_email_to_tuple
 
 # ---- Ensure we can import from project root (…/code) ----
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # .../code
@@ -155,9 +156,8 @@ def process_email_to_tuple(
     )
 
 
-# main.py — run the Excel-Knowledge-Base pipeline directly in code
 
-from processing_folder.excel_scan.pass_into_kb import process_email_to_tuple
+
 
 def main():
     # 📨 Step 1: Provide the raw email content
@@ -169,7 +169,7 @@ def main():
 
     # 🧠 Step 2: Run the pipeline and get the result
     result_tuple = process_email_to_tuple(raw_email, debug=False)
-
+    return result_tuple
     # 🎯 Step 3: Display the results
     #print("\n🎯 Final Output Tuple:")
     print(result_tuple)
