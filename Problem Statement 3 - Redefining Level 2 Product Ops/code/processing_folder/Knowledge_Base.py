@@ -91,12 +91,13 @@ def _escape_ctrl_chars_in_strings(s: str) -> str:
     return ''.join(out)
 
 
-def _convert_sop_to_list(data: dict) -> dict:
+def _convert_sop_to_list(data: dict,llm=False) -> dict:
     """Convert multi-line SOP string to list of lines (SOP_lines)."""
     sop = data.get("SOP", "")
     if isinstance(sop, str):
         lines = [ln.rstrip() for ln in sop.splitlines() if ln.strip()]
-        data["SOP"] = lines
+        if llm:
+            data["SOP"] = lines
     return data
 
 
@@ -116,10 +117,10 @@ def _save_json_pretty(data: dict, filename: str = "alert_result.json") -> str:
 # --------------------------------------------------------------------
 # Main Logic
 # --------------------------------------------------------------------
-
+ 
 def docx_read_and_save(tuple_parameter,filepath=KNOWLEDGE_BASE_DOCX) -> str:
     """Read DOCX, query LLM, extract JSON, convert SOP to list, save JSON."""
-    problem_statement,solution,CNTR,excel_matched = tuple_parameter
+    problem_statement,solution,SOP,excel_matched = tuple_parameter
     path = Path(filepath)
     if not path.exists():
         raise FileNotFoundError(f"❌ File not found: {filepath}")
@@ -129,16 +130,26 @@ def docx_read_and_save(tuple_parameter,filepath=KNOWLEDGE_BASE_DOCX) -> str:
     text = "\n".join(p.text.strip() for p in doc.paragraphs if p.text and p.text.strip())
     if not text.strip():
         raise ValueError(f"⚠️ File is empty or unreadable: {filepath}")
-    excel_matched = True
+    excel_matched = False
     # 2️⃣ Build LLM prompt
-    if excel_matched==False:
+    #make more conditions
+    zero_match = problem_statement == solution == SOP
+    if excel_matched==False or zero_match:
         #problem_match(problem_statement,text)
-        problem_statement = "EDI: Spike in DLQ messages after routine maintenance; consumer group lag increased across EDI topic"
-        docx_scanner.main(problem_statement,KNOWLEDGE_BASE_DOCX)
-    else:
-        #CNTR_match(CNTR,text)
-        CNTR = "EDI: Spike in DLQ messages after routine maintenance; consumer group lag increased across EDI topic"
-        docx_scanner.main(CNTR,KNOWLEDGE_BASE_DOCX)
+        problem_statement = "Callback delivery failures for NYKU8964499. Webhook sender faced 401 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/edi/upload'."
+        json_results = docx_scanner.main(problem_statement,KNOWLEDGE_BASE_DOCX)
+        return converting_json_file(json_results)
+    elif SOP!='0':
+        #SOP_match(SOP,text)
+        SOP = "EDI: Spike in DLQ messages after routine maintenance; consumer group lag increased across EDI topic"
+        return converting_json_file(docx_scanner.main(SOP,KNOWLEDGE_BASE_DOCX))
+    elif SOP == '0' and solution == '0' and problem_statement!='0':
+        #look for problem statement when no SOP under overview section
+        return converting_json_file(docx_scanner.main(problem_statement,KNOWLEDGE_BASE_DOCX))
+    elif SOP =='0' and solution != '0' and problem_statement != '0': 
+        print(solution)
+        print("NO SOP Found, only solutions")
+        return converting_json_file(solution)
 
 
 def problem_match(problem,text):
@@ -169,6 +180,12 @@ def problem_match(problem,text):
         print("✅ LLM responded")
 
         # 4️⃣ Coerce & extract JSON
+        converting_json_file(raw)
+
+def converting_json_file(raw,llm=False):
+        print("✅ LLM responded")
+
+        # 4️⃣ Coerce & extract JSON
         text_out = _coerce_llm_text(raw)
         try:
             json_str = _extract_json_block(text_out)
@@ -183,12 +200,12 @@ def problem_match(problem,text):
             parsed = json.loads(fixed)
 
         # 6️⃣ Convert SOP → list
-        parsed = _convert_sop_to_list(parsed)
+        parsed = _convert_sop_to_list(parsed,llm)
 
         # 7️⃣ Save and return path
         return _save_json_pretty(parsed, "alert_result.json")
     
-def CNTR_match(CNTR,text):
+def SOP_match(CNTR,text):
     if CNTR is None:
         print("CNTR not avaiable.")
         return

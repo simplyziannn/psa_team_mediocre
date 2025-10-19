@@ -194,35 +194,15 @@ def _heading_level(p: Paragraph) -> Optional[int]:
     return int(m.group(1)) if m else None
 
 def _is_list_item(p: Paragraph) -> bool:
-    """Detect bullets or numbered items, including multi-level 1.1 / 2.3.1 and Word auto-numbering."""
-    # 1) Native Word numbering (most reliable when present)
+    """Heuristic: Word numbering (numPr) OR a visible bullet/number prefix."""
     try:
-        pPr = getattr(p._p, "pPr", None)  # type: ignore[attr-defined]
-        if pPr is not None and getattr(pPr, "numPr", None) is not None:
+        numPr = p._p.pPr.numPr  # type: ignore[attr-defined]
+        if numPr is not None:
             return True
     except Exception:
         pass
-
-    # 2) Style name heuristic
-    try:
-        style_name = (p.style.name or "").lower()
-        if any(k in style_name for k in ("list", "bullet", "number")):
-            return True
-    except Exception:
-        pass
-
-    # 3) Visible text prefix heuristic (fallback)
-    t = (p.text or "").lstrip()
-    #   - bullets: -, – , •, ●, ◦, ·
-    #   - numbers: 1., 1), 1.1, 2.3.4), A., a)
-    if re.match(r'^([\-–•●◦·])\s+', t):
-        return True
-    if re.match(r'^((\d+(\.\d+)*)|[A-Za-z])[\.\)]\s+', t):
-        return True
-
-    return False
-
-
+    t = (p.text or "").strip()
+    return bool(re.match(r"^([\-–•●◦·]|(\d+|[A-Za-z])[\.\)]|•)\s+", t))
 
 def iter_block_items(doc: Document):
     """Yields blocks in document order as ('p', Paragraph) or ('tbl', Table)."""
@@ -508,27 +488,16 @@ def pick_best_hit_with_owner(
 
     def quick_owner_family(sid: str) -> Optional[str]:
         root = _parse_source_id_root(sid)
-        if not root or root not in block_index:
-            return None
+        if not root or root not in block_index: return None
         bidx = block_index[root]
-
-        # Walk upwards a bit to find the nearest owner title or styled heading with owner prefix.
-        scan_limit = 200
-        for i in range(bidx, max(-1, bidx - scan_limit), -1):
-            kind, obj = blocks[i]
-            if kind != 'p':
-                continue
-            txt = (obj.text or "").strip()
-            pref = _owner_prefix(txt)
-            if pref:
-                up = pref.upper()
-                if up in {"VSL", "VSSL", "VESSEL"}:
-                    return "VSL"
-                return up
-            # If a styled heading appears without prefix, keep going further up;
-            # the actual owner may be above this subheading.
-        return None
-
+        kind, obj = blocks[bidx]
+        if kind != 'p': return None
+        text = (obj.text or "").strip()
+        pref = _owner_prefix(text)
+        if not pref: return None
+        up = pref.upper()
+        if up in {"VSL", "VSSL", "VESSEL"}: return "VSL"
+        return up
 
     enriched = []
     for sid, text, score in results:
@@ -614,11 +583,9 @@ def main(
             docx_path=doc_path,
             hit_source_id=sid,
             wanted_sections=SUBSECTION_TITLES,
-            # Capture everything under Resolution; still list-only for Verification
-            list_only_for={"Overview": False, "Resolution": False, "Verification": True},
+            list_only_for={"Overview": False, "Resolution": True, "Verification": True},
             include_tables_as_lines=True
         )
-
 
     return results_to_json(
         query, doc_path, results,
@@ -630,7 +597,7 @@ def main(
 # -------------------------- CLI --------------------------------------
 
 if __name__ == "__main__":
-    query = ""
+    query = "EDI: Spike in DLQ messages after routine maintenance; consumer group lag increased across EDI topic"
     DOCX_PATH = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         "Info",
