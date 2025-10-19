@@ -1,24 +1,24 @@
-🧠 INCIDENT SUMMARY
+INCIDENT SUMMARY
 ================================================================================
 Module: Container (CNTR)
 
 Summary:
-Customer reported duplicate container information for REF-COP-0001 on PORTNET. Related alert data shows callback delivery failures for webhook deliveries (example: NYKU8964499 faced 401 due to peer TLS renegotiation on '/edi/upload') and knowledge-base entries describe callback/backlog and idempotency mitigations. DB lookup returned no matches for extracted variables. Immediate verification and log correlation are required to determine whether this is a data duplication, delivery, or presentation issue.
+Customer on PORTNET reports duplicate container REF-COP-0001 (two identical entries). Request received (ALR-861600) to investigate and reconcile the container records. No definitive cause provided in inputs; related webhook callback failure examples exist in alert/knowledge matches but no direct mapping to REF-COP-0001 in DB_RESULT.
 
 Root Cause:
 unknown
 
-🛠️ Resolution Steps:
- - Confirm the duplicate: capture screenshots from PORTNET and export any API responses that show two identical REF-COP-0001 records.
- - Search service logs and audit trails for REF-COP-0001 across ingestion, processing, and presentation layers; collect request IDs/correlation IDs for relevant timestamps.
- - Reproduce the container lookup on a safe test entity or staging copy and capture request/response payloads and status codes using a read-only token.
- - Inspect recent webhook/callback deliveries and callback queue/backlog for related failures (refer to alerts mentioning '/edi/upload' and callback queue growth); record error codes and timestamps.
- - Check API gateway/service health and upstream delivery logs around the incident window.
- - Review authentication/permissions for the calling client; if auth errors are observed, refresh/rotate tokens and verify scopes.
- - If duplicate writes or retries are implicated, ensure idempotency on callbacks and review retry backoff configuration.
- - Attach collected request/response evidence to the case and observe error rate and correctness for 30 minutes after remediation steps.
+Resolution Steps:
+ - Confirm and reproduce the duplicate: query PORTNET and internal datastore for REF-COP-0001; capture timestamps and full records.
+ - Inspect audit trail/history for creates/updates of REF-COP-0001 to identify source events.
+ - Re-run retrieval call for REF-COP-0001 on a safe/test entity using a read-only token; capture status code, latency, and request/correlation ID.
+ - Search callback/webhook delivery logs for REF-COP-0001 and for related endpoints (example: '/edi/upload') for any 4xx/5xx responses noted in alert summaries.
+ - Check API gateway/service health and delivery queue/backlog around the incident window (per owner guidance).
+ - If duplication is confirmed and safe to remediate, apply manual override and reconcile/remove the duplicate while recording the action in the audit trail.
+ - Notify the reporting customer on PORTNET of actions taken and monitor the item for at least 30 minutes for recurrence; attach request/response evidence to the case.
+ - If unresolved after these steps, escalate to Container Product Ops per escalation procedures.
 
-📣 Escalation Target: Container (CNTR)
+Escalation Target: Container (CNTR)
 Contacts:
  - Mark Lee – Product Ops Manager <mark.lee@psa123.com>
 Escalation Steps:

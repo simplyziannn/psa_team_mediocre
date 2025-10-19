@@ -406,7 +406,7 @@ def decide_solution(
 
     # 8) Create human-readable summary (uses enforced escalation block)
     human_lines: List[str] = []
-    human_lines.append("🧠 INCIDENT SUMMARY")
+    human_lines.append("INCIDENT SUMMARY")
     human_lines.append("=" * 80)
     human_lines.append(f"Module: {decision.get('module', 'N/A')}")
     human_lines.append(f"\nSummary:\n{decision.get('summary', 'N/A')}\n")
@@ -414,14 +414,14 @@ def decide_solution(
 
     steps = decision.get("resolution_steps") or []
     if isinstance(steps, list) and steps:
-        human_lines.append("🛠️ Resolution Steps:")
+        human_lines.append("Resolution Steps:")
         for s in steps:
             human_lines.append(f" - {str(s).strip()}")
     elif isinstance(steps, str):
-        human_lines.append(f"🛠️ Resolution Steps:\n{steps}")
+        human_lines.append(f"Resolution Steps:\n{steps}")
 
     esc = decision.get("escalation", {}) or {}
-    human_lines.append(f"\n📣 Escalation Target: {esc.get('target', 'N/A')}")
+    human_lines.append(f"\nEscalation Target: {esc.get('target', 'N/A')}")
     contacts = esc.get("contacts") or []
     if contacts:
         human_lines.append("Contacts:")

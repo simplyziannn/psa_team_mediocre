@@ -155,7 +155,7 @@ def main(raw_email):
     # 📨 Step 1: Provide the raw email content
 
 
-    # 🧠 Step 2: Run the pipeline and get the result
+    # Step 2: Run the pipeline and get the result
     result_tuple = process_email_to_tuple(raw_email, debug=False)
     #print(tuple(type(x).__name__ for x in result_tuple))
 
