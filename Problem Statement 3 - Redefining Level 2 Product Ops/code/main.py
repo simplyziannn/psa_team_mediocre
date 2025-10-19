@@ -35,7 +35,7 @@ def main():
     #llm 
     decision = decide_solution(compiled_path, raw_email=raw_email)
 
-    print("\n🧠 LLM Decision:\n", json.dumps(decision, indent=2))
+    print("\nLLM Decision:\n", json.dumps(decision, indent=2))
 
 
 
