@@ -1,6 +1,10 @@
 from email_processor.email_processor import process_any
 from processing_folder import processing_main
 from db_core_test import run_connector
+
+from compiler.result_pdf_compiler import compile_results
+import json
+
 def main():
     #read input 
     raw_email = (
@@ -13,13 +17,24 @@ def main():
     
     #db
     result = run_connector(raw)
-    print(result)
+    #print(result)
 
     #processing main , raw text as input
     json_path , pdf_output = processing_main.main(raw)
+    
     #complie output from docx(json) , pdf() , db 
     #print(json_path)
     #print(pdf_output)
+    compiled, compiled_path = compile_results(result, json_path, pdf_output)
+
+
+    # optional: print short preview
+    print("\n🧩 Compiled summary:")
+    print(json.dumps(compiled, indent=2), "...\n")
+
+
+
+
     #llm 
     
     #output 
@@ -28,5 +43,4 @@ def main():
 
 
 if __name__ == "__main__":
-    
     main()

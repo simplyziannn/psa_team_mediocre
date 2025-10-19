@@ -1,6 +1,6 @@
 {
   "query": "Callback delivery failures for NYKU8964499. Webhook sender faced 401 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/edi/upload'.",
-  "docx_path": "c:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Problem Statement 3 - Redefining Level 2 Product Ops\\Info\\Knowledge Base.docx",
+  "docx_path": "/Users/zian/Documents/PSA Hackathon/PSA_Mediocre/Problem Statement 3 - Redefining Level 2 Product Ops/Info/Knowledge Base.docx",
   "count": 5,
   "results": [
     {

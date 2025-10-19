@@ -11,7 +11,7 @@ else:
 # ---- CONFIG ---------------------------------------------------------------
 DEFAULT_XLSX = os.path.join(problem_statement_folder,"Info","Case Log.xlsx")
 DEFAULT_CACHE = os.path.join(problem_statement_folder,"code","processing_folder","excel_scan","case_log.embcache.pkl")   # must already exist
-print(DEFAULT_CACHE)
+#print(DEFAULT_CACHE)
 # ---- META TYPES -----------------------------------------------------------
 @dataclass
 class CacheMeta:
