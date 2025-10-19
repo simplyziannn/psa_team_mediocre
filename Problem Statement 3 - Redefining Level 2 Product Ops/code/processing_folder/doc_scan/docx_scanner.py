@@ -630,7 +630,7 @@ def main(
 # -------------------------- CLI --------------------------------------
 
 if __name__ == "__main__":
-    query = ""
+    query = "EDI"
     DOCX_PATH = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         "Info",

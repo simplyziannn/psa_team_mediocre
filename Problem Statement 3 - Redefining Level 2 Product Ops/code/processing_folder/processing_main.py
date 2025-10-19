@@ -13,7 +13,9 @@ def read_matching_count():
     
 def main():
     tuple_result = excel_process.main()
-    Knowledge_Base.main(tuple_result)
+    json_path = Knowledge_Base.main(tuple_result)
+    #pdf(escalation)
+    #output to json back to main main
     return None
 if __name__ == "__main__":
     main()
