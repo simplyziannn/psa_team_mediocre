@@ -9,7 +9,7 @@ Given an **email or alert (test case)**, the system automatically scans **Excel 
 
 ## **System Flow**
 
-![System Flow](Problem%20Statement%203%20-%20Redefining%20Level%202%20Product%20Ops/flowchart.jpeg)
+![System Flow](Problem%20Statement%203%20-%20Redefining%20Level%202%20Product%20Ops/hackathon flowchart.drawio.png)
 
 
 ### **1. Input**
