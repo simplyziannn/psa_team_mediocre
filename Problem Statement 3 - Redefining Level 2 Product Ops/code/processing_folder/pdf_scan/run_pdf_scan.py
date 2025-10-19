@@ -2,8 +2,15 @@
 import json
 from typing import List, Dict, Any, Optional, Union
 
-from json_extract import extract_module_from_json
-from contacts_lookup import lookup_contact_row, lookup_contacts
+#from json_extract import extract_module_from_json
+
+
+if __name__ != "__main__":
+    from .json_extract import extract_module_from_json
+    from .contacts_lookup import lookup_contact_row, lookup_contacts
+else:
+    from json_extract import extract_module_from_json
+    from contacts_lookup import lookup_contact_row, lookup_contacts
 
 def resolve_alert_contacts(as_json: bool = False, route: Optional[str] = None) -> Union[List[Dict[str, Any]], str]:
     """
