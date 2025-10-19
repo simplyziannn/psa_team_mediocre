@@ -38,7 +38,7 @@ Generate solutions and/or SOPs based on the case log and problem statement.
 Cross-reference escalation contacts from PDF sources.
 
 Produce relevant escalation steps, resolutions, and standard procedures.
-
+'''
 ## Repository Structure
 
 Problem Statement 3 - Redefining Level 2 Product Ops/
@@ -118,7 +118,7 @@ Problem Statement 3 - Redefining Level 2 Product Ops/
 │       └── SCHEMA_OVERVIEW.md
 │
 └── Code Sprint 2025 Problem Statements.pdf
-
+'''
 Example Workflow
 
 Input → "EDI REF-COP-0001 stuck without ACK"
