@@ -39,6 +39,8 @@ Cross-reference escalation contacts from PDF sources.
 
 Produce relevant escalation steps, resolutions, and standard procedures.
 
+## Repository Structure
+
 Problem Statement 3 - Redefining Level 2 Product Ops/
 │
 ├── code/
@@ -116,7 +118,6 @@ Problem Statement 3 - Redefining Level 2 Product Ops/
 │       └── SCHEMA_OVERVIEW.md
 │
 └── Code Sprint 2025 Problem Statements.pdf
-
 
 Example Workflow
 
