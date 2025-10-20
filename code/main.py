@@ -17,8 +17,8 @@ def run(text: str) -> dict:
     """
     try:
         # 1. Email processing - extract structured data from raw text
-        problem_draft = process_any(text)
-        
+        problem_draft = process_any(text) 
+        print(problem_draft, end="\n\n problem draft --------------------------------------------------------")
         # 2. Database query - find matching records
         db_result = run_connector(problem_draft)
         

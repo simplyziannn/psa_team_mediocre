@@ -481,7 +481,9 @@ def extract_owner_with_sections(
 # ------------------------ Hit selection (family preference) -----------
 
 def _infer_preferred_families_from_query(q: str) -> List[str]:
-    ql = q.lower()
+    if isinstance(q, int):
+        q = str(q)          # cast to string first
+    ql = q.lower() if isinstance(q, str) else q
     prefs: List[str] = []
     if any(w in ql for w in ["container", "cntr", "equipment"]): prefs.append("CNTR")
     if any(w in ql for w in ["vessel", "voyage", "etb", "eta", "baplie", "coprar"]): prefs.append("VSL")

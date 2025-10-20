@@ -1,26 +1,23 @@
 INCIDENT SUMMARY
 ================================================================================
-Module: Vessel (VS)
+Module: unknown
 
 Summary:
-Customer could not create vessel advice for MV Lion City 07; the operation failed with error code VESSEL_ERR_4. The report indicates the local vessel name was already in use by another vessel advice, preventing creation.
+Received an unstructured message 'pek lao zai'. ALERT SUMMARY indicates no extracted entities (query=0, count=0) and DB RESULT returned: 'No matches found for extracted variables'. DOCX/EXCEL returned no relevant entries. No owner or actionable data present in inputs.
 
 Root Cause:
-Likely a validation/conflict on the local vessel name (duplicate entry) causing the system to reject creation and return VESSEL_ERR_4.
+unknown
 
 Resolution Steps:
- - Confirm and record the exact error: VESSEL_ERR_4, timestamp, and any available request ID/correlation ID.
- - Query the vessel-advice records for local vessel name 'MV Lion City 07' to locate existing entries using that name.
- - If a duplicate advice is found, determine the correct record and either rename/disambiguate the local vessel name or mark the other advice as superseded according to data governance.
- - After correcting the name or record state, retry creation of the vessel advice and verify success.
- - Collect and attach evidence (error message, timestamps, request ID/correlation ID, user/client that attempted the action) for audit and triage.
- - If the issue persists after corrective action, escalate to Vessel Duty (see escalation.contact & steps).
+ - Contact the message sender to request a clear, structured description of the issue and relevant context.
+ - Confirm sender identity and intended recipient/team before further processing.
+ - Re-run knowledge-base search using the provided docx_path: C:\Users\zeriu\OneDrive\Documents\GitHub\psa_team_mediocre\Info\Knowledge Base.docx if additional details are provided.
+ - If clarification is not provided and the message may be operational, escalate to 'Others' per escalation catalog.
 
-Escalation Target: Vessel (VS)
+Escalation Target: Others
 Contacts:
- - Jaden Smith – Vessel Operations <jaden.smith@psa123.com>
+ - PSA Helpdesk <support@psa123.com>
 Escalation Steps:
- - 1. Notify Vessel Duty team.
- - 2. If no response, escalate to Senior Ops Manager.
- - 3. Engage Vessel Static team for further diagnostics.
+ - 1. For non-urgent queries, escalate to team lead.
+ - 2. For emergency issues, direct to on-call ops.
 ================================================================================

@@ -3,16 +3,9 @@ sys.path.append(os.path.dirname(__file__))
 from excel_scan import pass_into_kb as excel_process
 from pdf_scan.run_pdf_scan import resolve_alert_contacts
 import Knowledge_Base   
-def read_matching_count(): 
-    with open("result.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    # Access the count value
-    count_value = data.get("count", 0)
-
-    print("Count:", count_value)
     
 def main(raw='test'): #raw text parameter 
+    print(raw, end="\n\n RAW RAW --------------------------------------------------------")
     tuple_result = excel_process.main(raw)#txt input parameter
     json_path = Knowledge_Base.main(tuple_result)
     print(resolve_alert_contacts())

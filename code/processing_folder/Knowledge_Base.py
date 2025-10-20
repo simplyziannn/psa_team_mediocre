@@ -136,12 +136,12 @@ def docx_read_and_save(tuple_parameter,filepath=KNOWLEDGE_BASE_DOCX) -> str:
     zero_match = problem_statement == solution == SOP
     if excel_matched==False or zero_match:
         #problem_match(problem_statement,text)
-        problem_statement = "Callback delivery failures for NYKU8964499. Webhook sender faced 401 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/edi/upload'."
+        #problem_statement = "Callback delivery failures for NYKU8964499. Webhook sender faced 401 due to peer TLS renegotiation. Queue grew and breaker opened. Affected endpoint '/edi/upload'."
         json_results = docx_scanner.main(problem_statement,KNOWLEDGE_BASE_DOCX)
         return converting_json_file(json_results)
     elif SOP!='0':
         #SOP_match(SOP,text)
-        SOP = "EDI: Spike in DLQ messages after routine maintenance; consumer group lag increased across EDI topic"
+        #SOP = "EDI: Spike in DLQ messages after routine maintenance; consumer group lag increased across EDI topic"
         return converting_json_file(docx_scanner.main(SOP,KNOWLEDGE_BASE_DOCX))
     elif SOP == '0' and solution == '0' and problem_statement!='0':
         #look for problem statement when no SOP under overview section
@@ -250,7 +250,7 @@ def SOP_match(CNTR,text):
 
     # 7️⃣ Save and return path
     return _save_json_pretty(parsed, "alert_result.json")
-    return
+    
     
 def main(test_tuple):
     saved_path = docx_read_and_save(test_tuple)
