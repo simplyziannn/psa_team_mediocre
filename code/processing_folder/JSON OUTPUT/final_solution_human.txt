@@ -1,28 +1,23 @@
 INCIDENT SUMMARY
 ================================================================================
-Module: EDI/API
+Module: unknown
 
 Summary:
-Time zone serialization drift for partner Partner-E caused eventTime to be serialized in UTC+0 while TOS computed local UTC+8, producing out-of-order milestones for container HLCU5962669 at PSA Keppel. EDIFACT CODECO 'Gate Out' overshadowed a later 'Loaded' event on the portal; booking BK-O6Q9TJZ7 was not operationally impacted but customer view was inconsistent. Investigation and correction required to restore ordering and customer view.
+Received short/ambiguous original content 'pek pek pek'. Alert extraction returned query=0 and pointed to Knowledge Base docx path, but DB search returned 'No matches found for extracted variables'. No actionable entities identified.
 
 Root Cause:
-Time zone serialization mismatch: partner Partner-E events serialized eventTime in UTC+0 while TOS computed/used UTC+8, causing timestamp ordering discrepancies.
+unknown
 
 Resolution Steps:
- - Contact EDI/API team (Tom Tan) immediately and provide ALR-360601, container HLCU5962669, booking BK-O6Q9TJZ7, and raw EDIFACT CODECO messages.
- - Collect raw EDIFACT CODECO message(s) for HLCU5962669 and extract the serialized eventTime values from the partner feed and corresponding TOS ingestion logs.
- - Compare serialized eventTime values (partner UTC+0) vs TOS-interpreted timestamps (UTC+8) to confirm the timezone offset and ordering discrepancy.
- - Correct the affected timestamps in the portal/database for HLCU5962669 so that 'Loaded' is ordered after 'Gate Out', then reprocess or replay the parsed event(s) to update milestone ordering.
- - Validate portal ordering and customer-facing view for booking BK-O6Q9TJZ7 after correction.
- - Implement a normalization or ingestion rule to ensure partner eventTime values are timezone-aware or normalized to TOS local UTC+8 at ingest, and add a verification check for EDIFACT CODECO event ordering.
- - Notify partner Partner-E of the timezone serialization mismatch and confirm they will align future event serialization with agreed timezone formatting.
- - Monitor for similar mismatches across recent messages and run a targeted sweep for containers with events around the same time window; escalate if further discrepancies found.
+ - Request clarification from the message sender to provide a clear, actionable report.
+ - Re-run the extraction/parsing on the ORIGINAL CONTENT after clarification.
+ - Open and search the referenced knowledge base document at 'C:\Users\zeriu\OneDrive\Documents\GitHub\psa_team_mediocre\Info\Knowledge Base.docx' for related entries.
+ - If no resolution after clarification and re-check, follow escalation steps for 'Others'.
 
-Escalation Target: EDI/API
+Escalation Target: Others
 Contacts:
- - Tom Tan – EDI/API Support <tom.tan@psa123.com>
+ - PSA Helpdesk <support@psa123.com>
 Escalation Steps:
- - 1. Contact EDI/API team via on-call channel.
- - 2. In case of API failures, escalate to Infra/SRE.
- - 3. Engage partner if issue persists.
+ - 1. For non-urgent queries, escalate to team lead.
+ - 2. For emergency issues, direct to on-call ops.
 ================================================================================

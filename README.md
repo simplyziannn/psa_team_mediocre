@@ -114,6 +114,12 @@ Problem Statement 3 - Redefining Level 2 Product Ops/
 │       ├── db.sql
 │       └── SCHEMA_OVERVIEW.md
 │
+├── Frontend/
+│   └── ...
+│
+├── Node_modules/
+│   └── ...
+│
 └── Code Sprint 2025 Problem Statements.pdf
 ```
 
