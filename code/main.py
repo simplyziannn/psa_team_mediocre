@@ -23,7 +23,7 @@ def run(text: str) -> dict:
         db_result = run_connector(problem_draft)
         
         # 3. Processing main - Knowledge Base search and PDF contact extraction
-        json_path, pdf_output = processing_main.ma  in(problem_draft)
+        json_path, pdf_output = processing_main.main(problem_draft)
         
         # 4. Compile all results together
         compiled, compiled_path = compile_results(db_result, json_path, pdf_output)

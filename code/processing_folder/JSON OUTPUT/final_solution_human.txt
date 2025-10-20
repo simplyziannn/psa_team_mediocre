@@ -3,16 +3,17 @@ INCIDENT SUMMARY
 Module: unknown
 
 Summary:
-Received an unstructured message 'pek lao zai'. ALERT SUMMARY indicates no extracted entities (query=0, count=0) and DB RESULT returned: 'No matches found for extracted variables'. DOCX/EXCEL returned no relevant entries. No owner or actionable data present in inputs.
+Received an unrecognized short message 'pek lao zai'. Automated lookup found no matches in the knowledge base or DB and no owner identified. Additional context file path provided in alert summary but contained no relevant entries.
 
 Root Cause:
 unknown
 
 Resolution Steps:
- - Contact the message sender to request a clear, structured description of the issue and relevant context.
- - Confirm sender identity and intended recipient/team before further processing.
- - Re-run knowledge-base search using the provided docx_path: C:\Users\zeriu\OneDrive\Documents\GitHub\psa_team_mediocre\Info\Knowledge Base.docx if additional details are provided.
- - If clarification is not provided and the message may be operational, escalate to 'Others' per escalation catalog.
+ - Confirm origin and sender of the message 'pek lao zai' (who sent it, via which channel, and timestamp).
+ - Request clarification from the reporter with specific details (impact, affected service, screenshots, and exact time).
+ - Open and review the referenced document at C:\Users\zeriu\OneDrive\Documents\GitHub\psa_team_mediocre\Info\Knowledge Base.docx for any context.
+ - Re-run the DB search for extracted variables and review logs to identify any related alerts or errors (DB RESULT shows 'No matches found for extracted variables').
+ - If unable to identify or resolve with the provided information, escalate per escalation.target instructions.
 
 Escalation Target: Others
 Contacts:
