@@ -123,7 +123,7 @@ Problem Statement 3 - Redefining Level 2 Product Ops/
 2. Set up the backend (python)
       - python3 -m venv .venv
       - source .venv/bin/activate      # macOS/Linux
-      -.venv\Scripts\activate         # Windows
+      - Or .venv\Scripts\activate         # Windows
 
       pip install -r requirements.txt
 
