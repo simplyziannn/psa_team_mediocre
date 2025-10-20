@@ -1,43 +1,41 @@
 {
-  "module": "unknown",
-  "summary": "Received an unrecognized short message 'pek lao zai'. Automated lookup found no matches in the knowledge base or DB and no owner identified. Additional context file path provided in alert summary but contained no relevant entries.",
-  "root_cause": "unknown",
+  "module": "EDI/API",
+  "summary": "Time zone serialization drift for partner Partner-E caused eventTime to be serialized in UTC+0 while TOS computed local UTC+8, producing out-of-order milestones for container HLCU5962669 at PSA Keppel. EDIFACT CODECO 'Gate Out' overshadowed a later 'Loaded' event on the portal; booking BK-O6Q9TJZ7 was not operationally impacted but customer view was inconsistent. Investigation and correction required to restore ordering and customer view.",
+  "root_cause": "Time zone serialization mismatch: partner Partner-E events serialized eventTime in UTC+0 while TOS computed/used UTC+8, causing timestamp ordering discrepancies.",
   "resolution_steps": [
-    "Confirm origin and sender of the message 'pek lao zai' (who sent it, via which channel, and timestamp).",
-    "Request clarification from the reporter with specific details (impact, affected service, screenshots, and exact time).",
-    "Open and review the referenced document at C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Info\\Knowledge Base.docx for any context.",
-    "Re-run the DB search for extracted variables and review logs to identify any related alerts or errors (DB RESULT shows 'No matches found for extracted variables').",
-    "If unable to identify or resolve with the provided information, escalate per escalation.target instructions."
+    "Contact EDI/API team (Tom Tan) immediately and provide ALR-360601, container HLCU5962669, booking BK-O6Q9TJZ7, and raw EDIFACT CODECO messages.",
+    "Collect raw EDIFACT CODECO message(s) for HLCU5962669 and extract the serialized eventTime values from the partner feed and corresponding TOS ingestion logs.",
+    "Compare serialized eventTime values (partner UTC+0) vs TOS-interpreted timestamps (UTC+8) to confirm the timezone offset and ordering discrepancy.",
+    "Correct the affected timestamps in the portal/database for HLCU5962669 so that 'Loaded' is ordered after 'Gate Out', then reprocess or replay the parsed event(s) to update milestone ordering.",
+    "Validate portal ordering and customer-facing view for booking BK-O6Q9TJZ7 after correction.",
+    "Implement a normalization or ingestion rule to ensure partner eventTime values are timezone-aware or normalized to TOS local UTC+8 at ingest, and add a verification check for EDIFACT CODECO event ordering.",
+    "Notify partner Partner-E of the timezone serialization mismatch and confirm they will align future event serialization with agreed timezone formatting.",
+    "Monitor for similar mismatches across recent messages and run a targeted sweep for containers with events around the same time window; escalate if further discrepancies found."
   ],
   "escalation": {
-    "target": "Others",
+    "target": "EDI/API",
     "contacts": [
       {
-        "name": "PSA Helpdesk",
-        "email": "support@psa123.com"
+        "name": "Tom Tan – EDI/API Support",
+        "email": "tom.tan@psa123.com"
       }
     ],
     "steps": [
-      "1. For non-urgent queries, escalate to team lead.",
-      "2. For emergency issues, direct to on-call ops."
+      "1. Contact EDI/API team via on-call channel.",
+      "2. In case of API failures, escalate to Infra/SRE.",
+      "3. Engage partner if issue persists."
     ]
   },
   "evidence_used": [
-    "ORIGINAL CONTENT='pek lao zai'",
-    "ALERT SUMMARY.docx_path='C:\\Users\\zeriu\\OneDrive\\Documents\\GitHub\\psa_team_mediocre\\Info\\Knowledge Base.docx'",
-    "ALERT SUMMARY.query=0",
-    "ALERT SUMMARY.count=0",
-    "ALERT SUMMARY.results=[]",
-    "ALERT SUMMARY.chosen_matches=[]",
-    "ALERT SUMMARY.owner=null",
-    "DB RESULT.error='No matches found for extracted variables'",
-    "DB RESULT.matches=[]",
-    "DOCX='No relevant entries found.'",
-    "EXCEL='No relevant entries found.'",
-    "ESCALATION CATALOG entry for Others contacts and steps copied verbatim"
+    "ORIGINAL CONTENT: Call ALR-360601 | EDI/API Data Mismatch on HLCU5962669 at PSA Keppel | Issue: Time zone drift caused eventTime to serialize in UTC+0 for partner Partner-E, while TOS computed local UTC+8. Container HLCU5962669 milestones appeared out-of-order on the portal; EDIFACT CODECO 'Gate Out' overshadowed later 'Loaded' event. Booking BK-O6Q9TJZ7 not impacted operationally but customer view inconsistent.",
+    "ALERT SUMMARY: { \"query\": 0, \"docx_path\": \"C:\\\\Users\\\\zeriu\\\\OneDrive\\\\Documents\\\\GitHub\\\\psa_team_mediocre\\\\Info\\\\Knowledge Base.docx\", \"count\": 0, \"results\": [], \"chosen_matches\": [], \"owner\": null }",
+    "DB RESULT: { \"problem_draft\": {}, \"matches\": [], \"error\": \"No matches found for extracted variables\" }",
+    "ESCALATION CATALOG entry for EDI/API: { \"target\": \"EDI/API\", \"contacts\": [ { \"name\": \"Tom Tan \\u2013 EDI/API Support\", \"email\": \"tom.tan@psa123.com\" } ], \"steps\": [ \"1. Contact EDI/API team via on-call channel.\", \"2. In case of API failures, escalate to Infra/SRE.\", \"3. Engage partner if issue persists.\" ] }",
+    "[DOCX] No relevant entries found.",
+    "[EXCEL] No relevant entries found."
   ],
-  "confidence": 0.15,
+  "confidence": 0.0,
   "_trace": {
-    "original_content": "pek lao zai"
+    "original_content": "Call ALR-360601 | EDI/API Data Mismatch on HLCU5962669 at PSA Keppel | Issue: Time zone drift caused eventTime to serialize in UTC+0 for partner Partner-E, while TOS computed local UTC+8. Container HLCU5962669 milestones appeared out-of-order on the portal; EDIFACT CODECO 'Gate Out' overshadowed later 'Loaded' event. Booking BK-O6Q9TJZ7 not impacted operationally but customer view inconsistent. Context tokens: SETTINGS, VOYAGE. All numeric identifiers are randomized placeholders; no credentials stored.. Please investigate and resolve urgently. Contact the relevant team if needed."
   }
 }
