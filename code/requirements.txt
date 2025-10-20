@@ -1,0 +1,33 @@
+# === Core Runtime ===
+python-dotenv
+pathlib
+argparse
+dataclasses
+
+# === Data & File Handling ===
+pandas
+openpyxl
+python-docx
+docx2txt
+PyPDF2
+numpy
+
+# === Machine Learning / Embeddings ===
+scikit-learn
+tqdm
+requests
+tenacity
+openai>=1.0.0
+
+# === Utilities & Logging ===
+typing-extensions
+rich
+colorama
+
+# === Web / API Layer (for web_ui or API backend) ===
+flask
+flask-cors
+
+# === Dev / Testing Tools ===
+pytest
+black
