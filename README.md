@@ -121,20 +121,20 @@ Problem Statement 3 - Redefining Level 2 Product Ops/
 
 1. Clone the Repository
 2. Set up the backend (python)
-      python3 -m venv .venv
-      source .venv/bin/activate      # macOS/Linux
-      .venv\Scripts\activate         # Windows
+      - python3 -m venv .venv
+      - source .venv/bin/activate      # macOS/Linux
+      -.venv\Scripts\activate         # Windows
 
       pip install -r requirements.txt
 
    To test the backend:
    - cd code
    - python3 main.py
-3. Set up Frontend
+4. Set up Frontend
       cd frontend
       npm install
       npm run dev
-4. Full flow summary
+5. Full flow summary
    - Run frontend
    - Enter an input (email/sms/test case) -> see the processed results in the interface
    
