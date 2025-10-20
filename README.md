@@ -131,10 +131,10 @@ Problem Statement 3 - Redefining Level 2 Product Ops/
    - cd code
    - python3 main.py
 4. Set up Frontend
-      cd frontend
-      npm install
-      npm run dev
-5. Full flow summary
+   - cd frontend
+   - npm install
+   - npm run dev
+6. Full flow summary
    - Run frontend
    - Enter an input (email/sms/test case) -> see the processed results in the interface
    
