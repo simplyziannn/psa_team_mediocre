@@ -18,12 +18,12 @@ def run(text: str) -> dict:
     try:
         # 1. Email processing - extract structured data from raw text
         problem_draft = process_any(text) 
-        print(problem_draft, end="\n\n problem draft --------------------------------------------------------")
+
         # 2. Database query - find matching records
         db_result = run_connector(problem_draft)
         
         # 3. Processing main - Knowledge Base search and PDF contact extraction
-        json_path, pdf_output = processing_main.main(problem_draft)
+        json_path, pdf_output = processing_main.ma  in(problem_draft)
         
         # 4. Compile all results together
         compiled, compiled_path = compile_results(db_result, json_path, pdf_output)
